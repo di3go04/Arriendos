@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentNow | Prototipo de Modernización UI/UX</title>
+  
+  <!-- Importar fuente Outfit de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* VARIABLES DEL SISTEMA DE DISEÑO MODERNIZADO */
+    :root {
+      --bg-app: #f4f6fa;
+      --bg-card: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      
+      --color-primary: #2563eb;
+      --color-primary-hover: #1d4ed8;
+      --color-primary-light: #eff6ff;
+      
+      --color-success: #10b981;
+      --color-success-light: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-light: #fffbeb;
+      --color-danger: #ef4444;
+      --color-danger-light: #fef2f2;
+      
+      --border-color: #e2e8f0;
+      --border-color-hover: #cbd5e1;
+      
+      /* Elevación Tridimensional */
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.03), 0 10px 15px -3px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+      
+      --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ESTILOS DE RESET GENERAL */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* LAYOUT: SIDEBAR Y CONTENIDO PRINCIPAL */
+    .sidebar {
+      width: 260px;
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      min-height: 100vh;
+      flex-shrink: 0;
+      box-shadow: 4px 0 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.2rem;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+    }
+
+    .brand-name {
+      font-weight: 900;
+      font-size: 1.25rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 12px;
+      transition: var(--transition-base);
+    }
+
+    .nav-item.active a, .nav-item a:hover {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-item.active a {
+      background-color: var(--color-primary);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    /* CONTENIDO PRINCIPAL */
+    .main-content {
+      flex-grow: 1;
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: calc(100% - 260px);
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* TARJETAS DE MÉTRICAS (GRID) */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .metric-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-md);
+      transition: var(--transition-base);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 20px -3px rgba(15, 23, 42, 0.06);
+      border-color: var(--border-color-hover);
+    }
+
+    .metric-info h4 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-top: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .metric-icon.blue {
+      background-color: var(--color-primary-light);
+      color: var(--color-primary);
+    }
+
+    .metric-icon.green {
+      background-color: var(--color-success-light);
+      color: var(--color-success);
+    }
+
+    .metric-icon.amber {
+      background-color: var(--color-warning-light);
+      color: var(--color-warning);
+    }
+
+    /* SECCIÓN DIVIDIDA: TABLA Y FORMULARIO */
+    .content-layout {
+      display: grid;
+      grid-template-columns: 8fr 4fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .content-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CONTENEDORES ELEVADOS (CARDS GRANDES) */
+    .elevated-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, #ffffff, #fcfdfe);
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .panel-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* TABLAS DE DATOS MODERNAS */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .modern-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .modern-table th {
+      background-color: #f8fafc;
+      padding: 14px 24px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table td {
+      padding: 16px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .modern-table tbody tr {
+      transition: var(--transition-base);
+    }
+
+    .modern-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    /* ESTRUCTURA INTERNA DE CELDAS */
+    .tenant-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background-color: var(--color-primary-light);
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      border: 1px solid rgba(37, 99, 235, 0.1);
+    }
+
+    .tenant-name {
+      display: block;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .tenant-email {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .property-cell {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .property-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .property-city {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .rent-amount {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* BADGES REDONDEADOS */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .badge-success {
+      background-color: var(--color-success-light);
+      color: var(--color-success);
+      border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .badge-danger {
+      background-color: var(--color-danger-light);
+      color: var(--color-danger);
+      border-color: rgba(239, 68, 68, 0.15);
+    }
+
+    /* FORMULARIOS CON RELIEVE Y FOCO */
+    .form-container {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      transition: var(--transition-base);
+    }
+
+    .form-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    /* BOTONES INTERACTIVOS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: 0 6px 12px -1px rgba(37, 99, 235, 0.25);
+      transform: translateY(-1.5px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0.5px);
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .btn-icon:hover {
+      background-color: var(--color-primary-light);
+      border-color: rgba(37, 99, 235, 0.2);
+      color: var(--color-primary);
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MENÚ LATERAL DE NAVEGACIÓN -->
+  <aside class="sidebar">
+    <div class="brand-logo">
+      <div class="brand-icon">R</div>
+      <span class="brand-name">RentNow</span>
+    </div>
+    
+    <nav style="flex-grow: 1;">
+      <ul class="nav-list">
+        <li class="nav-item active">
+          <a href="#">🏠 Panel General</a>
+        </li>
+        <li class="nav-item">
+          <a href="#">🏢 Propiedades</a>
+        </li>
+        <li class="nav-item">
+          <a href="#">👤 Inquilinos</a>
+        </li>
+        <li class="nav-item">
+          <a href="#">💳 Historial Pagos</a>
+        </li>
+        <li class="nav-item">
+          <a href="#">⚙️ Configuración</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+    
+    <!-- HEADER -->
+    <header class="header-section">
+      <div>
+        <h1 class="page-title">Panel de Control</h1>
+        <p class="page-subtitle">Monitoreo tridimensional de cobros, contratos e inmuebles.</p>
+      </div>
+      <button class="btn btn-primary">➕ Registrar Propiedad</button>
+    </header>
+
+    <!-- METRICS GRID -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-info">
+          <h4>Propiedades Rentadas</h4>
+          <div class="metric-value">24 / 28</div>
+        </div>
+        <div class="metric-icon blue">🏢</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-info">
+          <h4>Recaudo Mensual</h4>
+          <div class="metric-value">$4,200 USD</div>
+        </div>
+        <div class="metric-icon green">💵</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-info">
+          <h4>Incidencias Críticas</h4>
+          <div class="metric-value">2 Activas</div>
+        </div>
+        <div class="metric-icon amber">⚠️</div>
+      </div>
+    </section>
+
+    <!-- CONTENIDO PARTIDO: TABLA Y FORMULARIO -->
+    <section class="content-layout">
+      
+      <!-- COLUMNA IZQUIERDA: HISTORIAL DE PAGOS -->
+      <div class="elevated-panel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Historial Reciente de Pagos</h3>
+            <p class="panel-subtitle">Auditoría en tiempo real de abonos y cánones de arrendamiento</p>
+          </div>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Inquilino</th>
+                <th>Inmueble</th>
+                <th>Canon Pactado</th>
+                <th>Estado</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="tenant-cell">
+                    <span class="avatar">DR</span>
+                    <div>
+                      <span class="tenant-name">Diego Rueda</span>
+                      <span class="tenant-email">arrendatario@gmail.com</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="property-cell">
+                    <span class="property-title">Apto 402 - Cl. 26</span>
+                    <span class="property-city">Bogotá</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="rent-amount">$1,200,000 COP</span>
+                </td>
+                <td>
+                  <span class="badge badge-success">Completado</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                    <button class="btn-icon" title="Ver Detalles">👁️</button>
+                    <button class="btn-icon" title="Editar">✏️</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="tenant-cell">
+                    <span class="avatar">AM</span>
+                    <div>
+                      <span class="tenant-name">Andrea Mendoza</span>
+                      <span class="tenant-email">andrea.m@outlook.com</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="property-cell">
+                    <span class="property-title">Casa Campestre</span>
+                    <span class="property-city">Medellín</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="rent-amount">$3,500,000 COP</span>
+                </td>
+                <td>
+                  <span class="badge badge-danger">Retrasado</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                    <button class="btn-icon" title="Ver Detalles">👁️</button>
+                    <button class="btn-icon" title="Editar">✏️</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: REGISTRO DE NUEVA PROPIEDAD -->
+      <div class="elevated-panel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">Nuevo Inmueble</h3>
+            <p class="panel-subtitle">Alta de inmuebles en la biblioteca general</p>
+          </div>
+        </div>
+        
+        <form class="form-container" onsubmit="event.preventDefault(); alert('¡Simulación de Formulario Exitosa! Tu diseño tiene una profundidad e interactividad premium.');">
+          <div class="form-group">
+            <label class="form-label">Nombre del Inmueble</label>
+            <input type="text" class="form-input" placeholder="Ej: Apto 301 Loft" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Dirección Completa</label>
+            <input type="text" class="form-input" placeholder="Calle 45 # 12 - 34" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Canon de Renta Estimado</label>
+            <input type="text" class="form-input" placeholder="$0.00 COP" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
+            💾 Registrar Inmueble
+          </button>
+        </form>
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>
