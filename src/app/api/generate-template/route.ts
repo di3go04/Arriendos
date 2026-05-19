@@ -11,33 +11,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // Check if key is valid (not empty and not a placeholder/dummy value)
+    // Check if Gemini key is valid
     const isKeyValid = apiKey && 
                        apiKey.trim() !== '' && 
-                       !apiKey.includes('replace_with_your_openai_api_key') && 
-                       !apiKey.includes('dummy_key') &&
-                       apiKey.startsWith('sk-');
+                       !apiKey.includes('replace_') && 
+                       apiKey.startsWith('AIzaSy');
 
     if (isKeyValid) {
       try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `Eres un asistente legal experto en la redacción de contratos de arrendamiento en América Latina.
+        console.log('Calling Google Gemini API to generate template...');
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: `Eres un asistente legal experto en la redacción de contratos de arrendamiento en América Latina.
 Tu tarea es generar plantillas de contratos en formato HTML semántico con estilos CSS en línea (inline styles).
 
 Sigue estas reglas estrictas:
-1. Retorna ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
+1. Retorna ÚNICAMENTE un objeto JSON válido con la siguiente estructura (no rodees la respuesta con \`\`\`json ni texto introductorio, debe ser puramente el JSON válido):
 {
   "titleSuggested": "Nombre sugerido para la plantilla (ej: Contrato de Apartamento con Mascotas)",
   "templateContent": "Contenido HTML del contrato redactado"
@@ -55,33 +56,35 @@ Sigue estas reglas estrictas:
    - {{fecha_fin}} (Fecha de finalización)
    - {{dia_pago}} (Día de pago establecido)
    - {{clausulas_extra}} (Cláusulas y términos adicionales personalizados)
-4. Incorpora de forma muy detallada e integrada todas las peticiones específicas del usuario en el prompt, redactando cláusulas legales hermosas y válidas para ese fin (por ejemplo: si pide cláusula de mascotas, redáctala explícitamente en el cuerpo del contrato, o si pide pago el día 10 o depósito especial, intégralo).
-5. No incluyas código de markdown (como \`\`\`json) en tu respuesta. Tu respuesta completa debe ser únicamente el objeto JSON.`,
+4. Incorpora de forma muy detallada e integrada todas las peticiones específicas del usuario en el prompt, redactando cláusulas legales hermosas y válidas para ese fin (por ejemplo: si pide cláusula de mascotas, redáctala explícitamente en el cuerpo del contrato, o si pide pago el día 10 o depósito especial, intégralo).`,
+                    },
+                    {
+                      text: `Genera una plantilla de contrato de arrendamiento basada en los siguientes requerimientos del usuario:\n\n"${prompt}"`,
+                    }
+                  ],
+                }
+              ],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.7,
               },
-              {
-                role: 'user',
-                content: `Genera una plantilla de contrato de arrendamiento basada en los siguientes requerimientos del usuario:\n\n"${prompt}"`,
-              },
-            ],
-            temperature: 0.7,
-          }),
-        });
+            }),
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
-          const resultText = data.choices?.[0]?.message?.content || '';
+          const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
           
-          // Parse JSON result safely
           try {
-            // Remove markdown codeblock backticks if present
             const cleanText = resultText.replace(/^\s*```json\s*|```\s*$/g, '').trim();
             const parsed = JSON.parse(cleanText);
             if (parsed.templateContent && parsed.titleSuggested) {
+              console.log('Successfully generated template using Google Gemini!');
               return NextResponse.json(parsed);
             }
           } catch (e) {
-            console.error('Error parsing OpenAI response content, fallback to regex extraction:', e);
-            // Backup regex extraction if JSON parser fails due to stray characters
+            console.error('Error parsing Gemini JSON response content, fallback to regex:', e);
             const titleMatch = resultText.match(/"titleSuggested"\s*:\s*"([^"]+)"/);
             const contentMatch = resultText.match(/"templateContent"\s*:\s*"([\s\S]+)"\s*(?:,\s*"|$)/);
             if (titleMatch && contentMatch) {
@@ -92,10 +95,11 @@ Sigue estas reglas estrictas:
             }
           }
         } else {
-          console.warn('OpenAI API returned non-OK status, falling back to local generator.');
+          const errText = await response.text();
+          console.warn('Gemini API returned non-OK status:', response.status, errText);
         }
       } catch (err) {
-        console.error('Failed to communicate with OpenAI API:', err);
+        console.error('Failed to communicate with Google Gemini API:', err);
       }
     }
 

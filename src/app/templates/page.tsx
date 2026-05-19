@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ContractTemplate } from '@/types';
@@ -9,7 +9,6 @@ import {
   FileCode,
   Plus,
   Search,
-  Eye,
   Copy,
   Trash2,
   Edit,
@@ -20,39 +19,23 @@ import {
   Lock,
   ChevronRight,
   Loader2,
-  CheckCircle,
-  HelpCircle,
   FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 const SYSTEM_VARIABLES = [
-  { key: 'arrendador_nombre', desc: 'Nombre completo del propietario' },
-  { key: 'arrendatario_nombre', desc: 'Nombre completo del inquilino' },
-  { key: 'arrendatario_documento', desc: 'Cédula o ID del inquilino' },
-  { key: 'propiedad_direccion', desc: 'Dirección completa del inmueble' },
-  { key: 'propiedad_ciudad', desc: 'Ciudad de la propiedad' },
-  { key: 'renta_mensual', desc: 'Valor del canon mensual de arrendamiento' },
-  { key: 'deposito', desc: 'Valor del depósito en garantía' },
-  { key: 'fecha_inicio', desc: 'Fecha de inicio del contrato' },
-  { key: 'fecha_fin', desc: 'Fecha de finalización del contrato' },
-  { key: 'dia_pago', desc: 'Día del mes establecido para el pago' },
-  { key: 'clausulas_extra', desc: 'Cláusulas o términos adicionales' }
+  { key: 'arrendador_nombre', label: 'Nombre del Propietario (Arrendador)', desc: 'Nombre completo del propietario que arrienda' },
+  { key: 'arrendatario_nombre', label: 'Nombre del Inquilino (Arrendatario)', desc: 'Nombre completo del inquilino que toma la propiedad' },
+  { key: 'arrendatario_documento', label: 'Documento de Identificación', desc: 'Cédula o ID del inquilino' },
+  { key: 'propiedad_direccion', label: 'Dirección del Inmueble', desc: 'Dirección física completa del inmueble' },
+  { key: 'propiedad_ciudad', label: 'Ciudad de la Propiedad', desc: 'Ciudad donde se ubica el inmueble' },
+  { key: 'renta_mensual', label: 'Canon de Renta Mensual', desc: 'Valor mensual acordado por el arrendamiento' },
+  { key: 'deposito', label: 'Depósito de Garantía', desc: 'Monto de dinero entregado en garantía' },
+  { key: 'fecha_inicio', label: 'Fecha de Inicio', desc: 'Día en que entra en vigencia el arrendamiento' },
+  { key: 'fecha_fin', label: 'Fecha de Finalización', desc: 'Día en que expira la vigencia del arrendamiento' },
+  { key: 'dia_pago', label: 'Día de Pago Pactado', desc: 'Día límite del mes para el pago del canon' },
+  { key: 'clausulas_extra', label: 'Cláusulas Adicionales', desc: 'Acuerdos o cláusulas especiales adicionales' }
 ];
-
-const MOCK_DATA: Record<string, string> = {
-  arrendador_nombre: 'CARLOS ALBERTO GÓMEZ RESTREPO',
-  arrendatario_nombre: 'MARÍA FERNANDA SÁNCHEZ HERNÁNDEZ',
-  arrendatario_documento: 'C.C. 1.023.456.789 de Medellín',
-  propiedad_direccion: 'Calle 10A # 34-12, Apto 502, Torre Sur',
-  propiedad_ciudad: 'Envigado',
-  renta_mensual: '$ 1.800.000 COP',
-  deposito: '$ 1.800.000 COP',
-  fecha_inicio: '18 de Mayo de 2026',
-  fecha_fin: '17 de Mayo de 2027',
-  dia_pago: '5',
-  clausulas_extra: '1. El arrendatario no podrá subarrendar el inmueble. 2. Se permiten mascotas de tamaño pequeño.'
-};
 
 const DEFAULT_TEMPLATE_CONTENT = `
 <div style="font-family: 'Outfit', sans-serif; color: #1e293b; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px;">
@@ -92,13 +75,12 @@ const DEFAULT_TEMPLATE_CONTENT = `
 export default function TemplatesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [templates, setTemplates] = useState<ContractTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Form Editor States
+  // Form Editor States (100% Visual / WYSIWYG)
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
   const [name, setName] = useState('');
@@ -107,18 +89,13 @@ export default function TemplatesPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Preview States
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [previewHtml, setPreviewHtml] = useState('');
-
-  // AI Template Generator States
+  // AI Template Generator States (100% Visual)
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiResultContent, setAiResultContent] = useState('');
   const [aiResultTitle, setAiResultTitle] = useState('');
   const [isAiPublic, setIsAiPublic] = useState(false);
-  const [aiEditMode, setAiEditMode] = useState<'visual' | 'code'>('visual');
   const [aiError, setAiError] = useState('');
 
   const handleOpenAiCreator = () => {
@@ -127,7 +104,6 @@ export default function TemplatesPage() {
     setAiResultTitle('');
     setAiError('');
     setIsAiPublic(false);
-    setAiEditMode('visual');
     setIsAiOpen(true);
   };
 
@@ -217,21 +193,17 @@ export default function TemplatesPage() {
 
   const insertVariableIntoAiTemplate = (variableKey: string) => {
     const placeholder = `{{${variableKey}}}`;
-    if (aiEditMode === 'visual') {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        range.insertNode(document.createTextNode(placeholder));
-        const el = document.getElementById('ai-visual-editor');
-        if (el) {
-          setAiResultContent(el.innerHTML);
-        }
-      } else {
-        setAiResultContent(prev => prev + ` ${placeholder}`);
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(placeholder));
+      const el = document.getElementById('ai-visual-editor');
+      if (el) {
+        setAiResultContent(el.innerHTML);
       }
     } else {
-      setAiResultContent(prev => prev + placeholder);
+      setAiResultContent(prev => prev + ` ${placeholder}`);
     }
   };
 
@@ -244,7 +216,6 @@ export default function TemplatesPage() {
   const fetchTemplates = async () => {
     setIsLoading(true);
     try {
-      // Query templates owned by the user OR marked as public
       const { data, error } = await supabase
         .from('contract_templates')
         .select('*')
@@ -266,12 +237,10 @@ export default function TemplatesPage() {
     setContent(DEFAULT_TEMPLATE_CONTENT);
     setIsPublic(false);
     setErrorMsg('');
-    setIsPreviewMode(false);
     setIsEditorOpen(true);
   };
 
   const handleOpenEditor = (template: ContractTemplate) => {
-    // Non-owners can duplicate public templates, but not modify them directly
     if (template.owner_id !== user?.id) {
       toast({ type: 'warning', message: 'Esta plantilla es pública. Duplica para crear una copia editable.' });
       return;
@@ -281,47 +250,23 @@ export default function TemplatesPage() {
     setContent(template.content);
     setIsPublic(template.is_public);
     setErrorMsg('');
-    setIsPreviewMode(false);
     setIsEditorOpen(true);
   };
 
-  // Cursor-based variable injection helper
   const insertVariable = (variableKey: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
     const placeholder = `{{${variableKey}}}`;
-
-    const newContent = before + placeholder + after;
-    setContent(newContent);
-
-    // Reposition cursor right after inserted placeholder
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
-    }, 50);
-  };
-
-  // Replace double curly brackets variables with realistic mock texts
-  const compilePreview = () => {
-    let compiled = content;
-    SYSTEM_VARIABLES.forEach(v => {
-      const regex = new RegExp(`\\{\\{${v.key}\\}\\}`, 'g');
-      compiled = compiled.replace(regex, MOCK_DATA[v.key] || `[${v.key}]`);
-    });
-    setPreviewHtml(compiled);
-  };
-
-  const handleTogglePreview = () => {
-    if (!isPreviewMode) {
-      compilePreview();
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(placeholder));
+      const el = document.getElementById('manual-visual-editor');
+      if (el) {
+        setContent(el.innerHTML);
+      }
+    } else {
+      setContent(prev => prev + ` ${placeholder}`);
     }
-    setIsPreviewMode(!isPreviewMode);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -335,7 +280,6 @@ export default function TemplatesPage() {
     setErrorMsg('');
 
     try {
-      // Find all custom tags or tags between {{ }} inside the text content
       const regex = /\{\{([^}]+)\}\}/g;
       const detectedVariables: string[] = [];
       let match;
@@ -354,18 +298,18 @@ export default function TemplatesPage() {
       };
 
       if (editingTemplate) {
-        // Update template
         const { error } = await supabase
           .from('contract_templates')
           .update(payload)
           .eq('id', editingTemplate.id);
         if (error) throw error;
+        toast({ type: 'success', message: '¡Plantilla actualizada exitosamente!' });
       } else {
-        // Insert new template
         const { error } = await supabase
           .from('contract_templates')
           .insert(payload);
         if (error) throw error;
+        toast({ type: 'success', message: '¡Plantilla creada exitosamente!' });
       }
 
       confetti({ particleCount: 60, spread: 50 });
@@ -400,6 +344,7 @@ export default function TemplatesPage() {
 
       confetti({ particleCount: 40, spread: 40 });
       toast({ type: 'success', message: 'Plantilla duplicada exitosamente.' });
+      fetchTemplates();
     } catch (err) {
       console.error('Error duplicating template:', err);
       toast({ type: 'error', message: 'Error al duplicar la plantilla.' });
@@ -408,7 +353,7 @@ export default function TemplatesPage() {
 
   const handleDelete = async (template: ContractTemplate) => {
     if (template.owner_id !== user?.id) {
-      toast({ type: 'error', message: 'No autorizado para eliminar plantillas públicas de otros arrendadores.' });
+      toast({ type: 'error', message: 'No autorizado para eliminar plantillas.' });
       return;
     }
 
@@ -424,6 +369,7 @@ export default function TemplatesPage() {
       if (error) throw error;
 
       toast({ type: 'success', message: 'Plantilla eliminada.' });
+      fetchTemplates();
     } catch (err) {
       console.error('Error deleting template:', err);
       toast({ type: 'error', message: 'Error al eliminar la plantilla.' });
@@ -597,7 +543,7 @@ export default function TemplatesPage() {
           <FileCode className="w-12 h-12 text-muted-foreground/30 mx-auto" />
           <h3 className="font-extrabold text-sm text-foreground">No se encontraron plantillas</h3>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed font-semibold">
-            Puedes diseñar plantillas HTML personalizadas o duplicar plantillas de acceso público de otros arrendadores.
+            Puedes diseñar plantillas personalizadas o duplicar plantillas de acceso público de otros arrendadores.
           </p>
           <button
             onClick={handleOpenCreator}
@@ -608,7 +554,7 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* HTML Editor Modal View */}
+      {/* Manual Visual WYSIWYG Editor Modal */}
       {isEditorOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div className="bg-card border border-border rounded-2xl w-full max-w-6xl shadow-2xl overflow-hidden animate-scale-up my-4">
@@ -618,10 +564,10 @@ export default function TemplatesPage() {
               <div>
                 <h3 className="font-black text-lg text-foreground flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-                  {editingTemplate ? 'Modificar Plantilla Base' : 'Diseñador de Plantilla de Arrendamiento'}
+                  {editingTemplate ? 'Modificar Plantilla Base' : 'Diseñador Visual de Plantillas'}
                 </h3>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Usa código HTML y añade marcadores de posición dinámicos que se compilarán al emitir contratos de arrendamiento.
+                  Escribe tu contrato de forma visual. Haz clic en las variables del panel derecho para inyectarlas directamente en el cursor.
                 </p>
               </div>
               <button
@@ -642,7 +588,7 @@ export default function TemplatesPage() {
             {/* Split Creator Area */}
             <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border">
               
-              {/* Left Column: Form & Code Editor */}
+              {/* Left Column: Visual Editor Form */}
               <div className="lg:col-span-8 p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   
@@ -684,50 +630,63 @@ export default function TemplatesPage() {
 
                   {/* Body Editor Container */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b border-border pb-1">
+                    <div className="flex items-center justify-between border-b border-border pb-2">
                       <label className="block text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1.5">
-                        📄 Contenido de Contrato (Formato HTML)
+                        📄 Contenido de Contrato (Edición Visual)
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleTogglePreview}
-                        className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
-                          isPreviewMode
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border'
-                        }`}
-                      >
-                        {isPreviewMode ? '✏️ Ver Editor de Código' : '👁️ Vista Previa Compilada'}
-                      </button>
+                      
+                      {/* Format buttons toolbar */}
+                      <div className="flex items-center flex-wrap gap-1 bg-muted p-1 rounded-lg border border-border">
+                        <button
+                          type="button"
+                          onClick={() => document.execCommand('bold')}
+                          className="px-2 py-1 bg-card hover:bg-muted text-[10px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                          title="Negrita"
+                        >
+                          <strong>N</strong>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => document.execCommand('italic')}
+                          className="px-2 py-1 bg-card hover:bg-muted text-[10px] italic text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                          title="Cursiva"
+                        >
+                          <em>K</em>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => document.execCommand('formatBlock', false, '<h2>')}
+                          className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                        >
+                          Título H2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => document.execCommand('formatBlock', false, '<h3>')}
+                          className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                        >
+                          Título H3
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => document.execCommand('formatBlock', false, '<p>')}
+                          className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                        >
+                          Párrafo
+                        </button>
+                      </div>
                     </div>
 
-                    {isPreviewMode ? (
-                      /* Live compiled simulation block */
-                      <div className="border border-border rounded-xl bg-white p-6 h-[350px] overflow-y-auto shadow-inner text-slate-800">
-                        {previewHtml ? (
-                          <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
-                        ) : (
-                          <div className="text-center text-xs text-muted-foreground py-10">Cargando vista previa...</div>
-                        )}
-                      </div>
-                    ) : (
-                      /* raw textarea */
-                      <div className="space-y-1.5 relative">
-                        <textarea
-                          id="template-editor"
-                          ref={textareaRef}
-                          required
-                          value={content}
-                          onChange={(e) => setContent(e.target.value)}
-                          placeholder="Escribe tu código HTML y placeholders..."
-                          rows={14}
-                          className="w-full bg-[#0d131f] border border-border text-[#cbd5e1] font-mono text-[11px] leading-relaxed rounded-xl focus:ring-1 focus:ring-primary p-4 outline-none resize-y h-[350px] tab-size-4"
-                        />
-                        <div className="absolute right-4 bottom-4 bg-[#1e293b]/80 border border-slate-700 backdrop-blur-sm text-[9px] font-bold text-slate-400 px-2 py-1 rounded-md">
-                          Caracteres: {content.length}
-                        </div>
-                      </div>
-                    )}
+                    <div className="relative">
+                      <div
+                        id="manual-visual-editor"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => setContent(e.currentTarget.innerHTML)}
+                        dangerouslySetInnerHTML={{ __html: content }}
+                        className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
+                      />
+                    </div>
                   </div>
 
                   {/* Actions Row */}
@@ -763,7 +722,7 @@ export default function TemplatesPage() {
                 <div>
                   <h4 className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-primary" />
-                    Diccionario de Variables
+                    Inyección de Variables
                   </h4>
                   <p className="text-[10px] text-muted-foreground leading-normal mt-1">
                     Haz clic en cualquiera de las variables a continuación para insertarla en la posición exacta del cursor dentro del editor.
@@ -775,13 +734,12 @@ export default function TemplatesPage() {
                     <button
                       key={v.key}
                       type="button"
-                      disabled={isPreviewMode}
                       onClick={() => insertVariable(v.key)}
-                      className="w-full text-left bg-card hover:bg-primary/5 border border-border hover:border-primary/20 p-2.5 rounded-xl transition-all cursor-pointer hover:shadow-sm active:scale-99 group flex items-start justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full text-left bg-card hover:bg-primary/5 border border-border hover:border-primary/20 p-2.5 rounded-xl transition-all cursor-pointer hover:shadow-sm active:scale-99 group flex items-start justify-between"
                     >
                       <div className="space-y-0.5">
-                        <span className="block text-[11px] font-mono font-bold text-primary group-hover:text-primary-foreground">
-                          {`{{${v.key}}}`}
+                        <span className="block text-[11px] font-bold text-primary group-hover:text-primary-foreground">
+                          {v.label}
                         </span>
                         <span className="block text-[9px] text-muted-foreground leading-normal">
                           {v.desc}
@@ -794,10 +752,10 @@ export default function TemplatesPage() {
 
                 <div className="bg-primary/5 border border-primary/10 p-3.5 rounded-2xl space-y-2 mt-4">
                   <span className="block text-[9px] font-black text-primary uppercase tracking-wider flex items-center gap-1">
-                    💡 Tip de Edición HTML
+                    💡 Editor Enriquecido Visual
                   </span>
                   <p className="text-[10px] text-muted-foreground leading-normal font-medium">
-                    Puedes estructurar tu contrato usando etiquetas estándar como <code className="text-primary font-mono">&lt;p&gt;</code>, <code className="text-primary font-mono">&lt;h3&gt;</code>, <code className="text-primary font-mono">&lt;strong&gt;</code> y estilos en línea (<code className="text-primary font-mono">style="..."</code>) para lograr un diseño totalmente profesional.
+                    Puedes escribir tu contrato directamente, sombrear texto y aplicar formatos (Negrita, Cursiva, Encabezados) con la barra superior de herramientas de forma completamente visual y sencilla.
                   </p>
                 </div>
               </div>
@@ -808,7 +766,7 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* AI Template Generator Modal */}
+      {/* AI Template Generator Modal (100% Visual WYSIWYG) */}
       {isAiOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div className="bg-card border border-border rounded-2xl w-full max-w-6xl shadow-2xl overflow-hidden animate-scale-up my-4">
@@ -890,7 +848,7 @@ export default function TemplatesPage() {
 
                   <div className="flex justify-between items-center pt-1">
                     <span className="text-[10px] text-muted-foreground font-semibold">
-                      Usa lenguaje natural. La IA estructurará el HTML y las variables.
+                      Usa lenguaje natural. La IA de Google Gemini redactará y estructurará el contrato.
                     </span>
                     <button
                       type="button"
@@ -901,7 +859,7 @@ export default function TemplatesPage() {
                       {isGenerating ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Redactando...</span>
+                          <span>Redactando con Gemini...</span>
                         </>
                       ) : (
                         <>
@@ -928,7 +886,7 @@ export default function TemplatesPage() {
                       <div className="h-3 bg-muted rounded-md w-5/6"></div>
                     </div>
                     <p className="text-[10px] text-center text-primary font-bold animate-pulse pt-4">
-                      La Inteligencia Artificial de RentNow está redactando tu plantilla en formato HTML premium...
+                      La Inteligencia Artificial de Google Gemini está redactando tu plantilla de contrato...
                     </p>
                   </div>
                 )}
@@ -980,100 +938,57 @@ export default function TemplatesPage() {
                         </label>
 
                         {/* Format buttons toolbar */}
-                        {aiEditMode === 'visual' && (
-                          <div className="flex items-center flex-wrap gap-1 bg-muted p-1 rounded-lg border border-border">
-                            <button
-                              type="button"
-                              onClick={() => document.execCommand('bold')}
-                              className="px-2 py-1 bg-card hover:bg-muted text-[10px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
-                              title="Negrita"
-                            >
-                              <strong>N</strong>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => document.execCommand('italic')}
-                              className="px-2 py-1 bg-card hover:bg-muted text-[10px] italic text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
-                              title="Cursiva"
-                            >
-                              <em>K</em>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => document.execCommand('formatBlock', false, '<h2>')}
-                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
-                            >
-                              Título H2
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => document.execCommand('formatBlock', false, '<h3>')}
-                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
-                            >
-                              Título H3
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => document.execCommand('formatBlock', false, '<p>')}
-                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
-                            >
-                              Párrafo
-                            </button>
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center flex-wrap gap-1 bg-muted p-1 rounded-lg border border-border">
                           <button
                             type="button"
-                            onClick={() => setAiEditMode('visual')}
-                            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
-                              aiEditMode === 'visual'
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border'
-                            }`}
+                            onClick={() => document.execCommand('bold')}
+                            className="px-2 py-1 bg-card hover:bg-muted text-[10px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                            title="Negrita"
                           >
-                            ✏️ Diseño Visual
+                            <strong>N</strong>
                           </button>
                           <button
                             type="button"
-                            onClick={() => setAiEditMode('code')}
-                            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
-                              aiEditMode === 'code'
-                                ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border'
-                            }`}
+                            onClick={() => document.execCommand('italic')}
+                            className="px-2 py-1 bg-card hover:bg-muted text-[10px] italic text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                            title="Cursiva"
                           >
-                            💻 Código HTML
+                            <em>K</em>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => document.execCommand('formatBlock', false, '<h2>')}
+                            className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            Título H2
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => document.execCommand('formatBlock', false, '<h3>')}
+                            className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            Título H3
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => document.execCommand('formatBlock', false, '<p>')}
+                            className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            Párrafo
                           </button>
                         </div>
                       </div>
 
-                      {aiEditMode === 'visual' ? (
-                        <div className="relative">
-                          <div
-                            id="ai-visual-editor"
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => setAiResultContent(e.currentTarget.innerHTML)}
-                            dangerouslySetInnerHTML={{ __html: aiResultContent }}
-                            className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
-                          />
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5 relative">
-                          <textarea
-                            required
-                            value={aiResultContent}
-                            onChange={(e) => setAiResultContent(e.target.value)}
-                            placeholder="Código HTML generado por la IA..."
-                            rows={14}
-                            className="w-full bg-[#0d131f] border border-border text-[#cbd5e1] font-mono text-[11px] leading-relaxed rounded-xl focus:ring-1 focus:ring-primary p-4 outline-none resize-y h-[350px]"
-                          />
-                          <div className="absolute right-4 bottom-4 bg-[#1e293b]/80 border border-slate-700 backdrop-blur-sm text-[9px] font-bold text-slate-400 px-2 py-1 rounded-md">
-                            Caracteres: {aiResultContent.length}
-                          </div>
-                        </div>
-                      )}
+                      <div className="relative">
+                        <div
+                          id="ai-visual-editor"
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => setAiResultContent(e.currentTarget.innerHTML)}
+                          dangerouslySetInnerHTML={{ __html: aiResultContent }}
+                          className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
+                        />
+                      </div>
                     </div>
 
                     {/* Actions Row */}
@@ -1128,8 +1043,8 @@ export default function TemplatesPage() {
                       className="w-full text-left bg-card hover:bg-primary/5 border border-border hover:border-primary/20 p-2.5 rounded-xl transition-all cursor-pointer hover:shadow-sm active:scale-99 group flex items-start justify-between"
                     >
                       <div className="space-y-0.5">
-                        <span className="block text-[11px] font-mono font-bold text-primary group-hover:text-primary-foreground">
-                          {`{{${v.key}}}`}
+                        <span className="block text-[11px] font-bold text-primary group-hover:text-primary-foreground">
+                          {v.label}
                         </span>
                         <span className="block text-[9px] text-muted-foreground leading-normal">
                           {v.desc}
@@ -1145,7 +1060,7 @@ export default function TemplatesPage() {
                     💡 Editor Enriquecido Visual
                   </span>
                   <p className="text-[10px] text-muted-foreground leading-normal font-medium">
-                    Puedes sombrear cualquier sección de texto generada en el modo <strong>Diseño Visual</strong> y utilizar los controles de arriba para aplicar negrita, cursiva o encabezados. ¡La estructura HTML se actualizará automáticamente bajo el capó!
+                    Puedes sombrear cualquier sección de texto generada en el modo <strong>Diseño Visual</strong> y utilizar los controles de arriba para aplicar negrita, cursiva o encabezados.
                   </p>
                 </div>
               </div>
