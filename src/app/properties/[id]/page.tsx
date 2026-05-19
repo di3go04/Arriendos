@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 import {
   Building2,
   MapPin,
@@ -49,6 +50,7 @@ export default function PropertyDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,6 +101,7 @@ export default function PropertyDetailPage() {
       setExistingImages(data.image_urls || []);
     } catch (err) {
       console.error('Error fetching property details:', err);
+      toast({ type: 'error', message: 'Error al cargar los datos de la propiedad.' });
     } finally {
       setIsLoading(false);
     }
@@ -263,11 +266,11 @@ export default function PropertyDetailPage() {
 
       if (error) throw error;
 
-      alert('Propiedad dada de baja con éxito (Borrado lógico: Estado Inactivo).');
+      toast({ type: 'success', message: 'Propiedad dada de baja (estado inactivo).' });
       router.push('/properties');
     } catch (err) {
       console.error('Error archiving property:', err);
-      alert('Hubo un error al archivar la propiedad.');
+      toast({ type: 'error', message: 'Error al archivar la propiedad.' });
     }
   };
 

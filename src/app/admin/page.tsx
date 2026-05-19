@@ -90,7 +90,7 @@ export default function AdminPage() {
             <div>
               <h2 className="text-2xl font-extrabold text-foreground tracking-tight">Consola de Control del Administrador</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Monitorea a los usuarios registrados, perfiles del sistema y la salud operativa general de Arrendo.
+                Monitorea a los usuarios registrados, perfiles del sistema y la salud operativa general de RentNow.
               </p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function AdminPage() {
         <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="border-b border-border p-6">
             <h3 className="text-base font-bold text-foreground">Registro de Cuentas Activas</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">Todos los perfiles registrados en la base de datos de Arrendo</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">Todos los perfiles registrados en la base de datos de RentNow</p>
           </div>
 
           <div className="overflow-x-auto">

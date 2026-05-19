@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Property, MaintenanceIssue } from '@/types';
@@ -25,9 +26,14 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SmartInput } from '@/components/ui/SmartInput';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function MaintenancePage() {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   
   const [issues, setIssues] = useState<MaintenanceIssue[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -80,6 +86,7 @@ export default function MaintenancePage() {
 
     } catch (err) {
       console.error('Error fetching maintenance issues:', err);
+      toast({ type: 'error', message: 'Error al cargar las incidencias de mantenimiento.' });
     } finally {
       setIsLoading(false);
     }
@@ -109,24 +116,36 @@ export default function MaintenancePage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteIssue = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este registro de incidencia?')) {
-      return;
-    }
+  const handleDeleteIssue = (id: string) => {
+    const issueToDelete = issues.find(i => i.id === id);
+    if (!issueToDelete) return;
 
-    try {
-      const { error } = await supabase
-        .from('maintenance_issues')
-        .delete()
-        .eq('id', id);
+    // Optimistic UI Update
+    setIssues(prev => prev.filter(i => i.id !== id));
+    
+    let cancelled = false;
+    toast({
+      type: 'success',
+      message: 'Incidencia eliminada.',
+      onUndo: () => {
+        cancelled = true;
+        setIssues(prev => [issueToDelete, ...prev].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      }
+    });
 
-      if (error) throw error;
-      setIssues(prev => prev.filter(i => i.id !== id));
-      confetti({ particleCount: 50, spread: 60, colors: ['#ef4444', '#f87171'] });
-    } catch (err) {
-      console.error('Error deleting issue:', err);
-      alert('Hubo un problema al intentar eliminar el registro.');
-    }
+    setTimeout(async () => {
+      if (!cancelled) {
+        try {
+          const { error } = await supabase.from('maintenance_issues').delete().eq('id', id);
+          if (error) throw error;
+          confetti({ particleCount: 50, spread: 60, colors: ['#ef4444', '#f87171'] });
+        } catch (err) {
+          console.error('Error deleting issue:', err);
+          setIssues(prev => [issueToDelete, ...prev].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+          toast({ type: 'error', message: 'Hubo un problema al intentar eliminar en la nube.' });
+        }
+      }
+    }, 5500);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,7 +153,7 @@ export default function MaintenancePage() {
     if (!user) return;
 
     if (!propertyId) {
-      alert('Por favor selecciona una propiedad afectada.');
+      toast({ type: 'warning', message: 'Por favor selecciona una propiedad afectada.' });
       return;
     }
 
@@ -178,7 +197,7 @@ export default function MaintenancePage() {
       fetchIssuesAndProperties();
     } catch (err: any) {
       console.error('Error saving maintenance issue:', err);
-      alert('Hubo un problema al guardar la incidencia.');
+      toast({ type: 'error', message: 'Hubo un problema al guardar la incidencia.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -233,7 +252,7 @@ export default function MaintenancePage() {
         
         <button
           onClick={handleOpenCreateModal}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/15 transition-all text-xs cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Reportar Incidencia</span>
@@ -241,11 +260,11 @@ export default function MaintenancePage() {
       </div>
 
       {/* Advanced filters */}
-      <div className="bg-card border border-border p-4 rounded-2xl flex flex-col md:flex-row gap-4">
+      <div className="bg-card border-none p-4 rounded-2xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between">
         
         {/* Search */}
-        <div className="relative flex-1">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground pointer-events-none">
+        <div className="relative flex-1 w-full xl:w-auto">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-ink-muted pointer-events-none">
             <Search className="w-4 h-4" />
           </span>
           <input
@@ -253,50 +272,70 @@ export default function MaintenancePage() {
             placeholder="Buscar por título de incidencia o daño..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-muted border border-border text-foreground text-xs rounded-lg focus:ring-1 focus:ring-ring block pl-9 p-2.5 outline-none"
+            className="w-full bg-background border-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 block pl-9 p-2.5 outline-none transition-all placeholder:text-ink-muted"
           />
         </div>
 
-        {/* Status */}
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-muted text-foreground text-xs font-semibold rounded-lg border border-border p-2.5 w-full md:w-56 outline-none"
-        >
-          <option value="all">Todos los Estados</option>
-          <option value="pending">Reportados (Pendientes)</option>
-          <option value="in_progress">En Reparación</option>
-          <option value="resolved">Resueltos</option>
-        </select>
+        {/* Status Segmented Control */}
+        <div className="flex overflow-x-auto hide-scrollbar gap-2 w-full md:w-auto pb-1 md:pb-0">
+          {[
+            { id: 'all', label: 'Todos' },
+            { id: 'pending', label: 'Reportados' },
+            { id: 'in_progress', label: 'En Reparación' },
+            { id: 'resolved', label: 'Resueltos' }
+          ].map(fs => (
+            <button
+              key={fs.id}
+              onClick={() => setFilterStatus(fs.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                filterStatus === fs.id
+                  ? 'bg-foreground text-background shadow-btn'
+                  : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {fs.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Damage reports list */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <ListSkeleton count={4} />
       ) : filteredIssues.length === 0 ? (
-        <div className="py-16 text-center bg-card border border-dashed border-border rounded-3xl max-w-xl mx-auto space-y-4">
-          <div className="p-4 bg-muted rounded-full inline-flex text-muted-foreground">
-            <Wrench className="w-10 h-10" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-base text-foreground">Sin incidencias registradas</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
-              Todo funciona de maravilla en tus propiedades. Si se presenta un daño o mantenimiento, repórtalo aquí.
-            </p>
-          </div>
-        </div>
+        <EmptyState 
+          icon={<Wrench className="w-16 h-16" />}
+          title="Sin incidencias registradas"
+          description="Todo funciona de maravilla en tus propiedades. Si se presenta un daño o mantenimiento, repórtalo aquí."
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredIssues.map((issue) => {
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1 }
+            }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <AnimatePresence>
+            {filteredIssues.map((issue) => {
             const propName = issue.property?.title || 'Inmueble';
             const propAddress = issue.property?.address || 'Dirección';
 
             return (
-              <div
+              <motion.div
                 key={issue.id}
-                className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5"
+                layout
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-card border-none rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between space-y-5"
               >
                 
                 {/* Header info */}
@@ -342,7 +381,7 @@ export default function MaintenancePage() {
                     <span className="text-muted-foreground block text-[10px] font-semibold uppercase tracking-wider mb-1">
                       Costo Estimado
                     </span>
-                    <span className="font-black text-foreground block">
+                    <span className="font-black text-foreground block tabular-nums text-primary">
                       {issue.estimated_cost ? `${currencySymbol} ${Number(issue.estimated_cost).toLocaleString()}` : 'Sin cotizar'}
                     </span>
                   </div>
@@ -370,14 +409,14 @@ export default function MaintenancePage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleOpenEditModal(issue)}
-                      className="p-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer animate-scale-up"
+                      className="p-2 rounded-lg border-none bg-muted hover:bg-muted/80 text-ink-muted hover:text-foreground transition-all cursor-pointer shadow-sm"
                       title="Editar Incidencia"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteIssue(issue.id)}
-                      className="p-2 rounded-lg border border-destructive/20 text-destructive bg-destructive/5 hover:bg-destructive/10 transition-all cursor-pointer animate-scale-up"
+                      className="p-2 rounded-lg border-none bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all cursor-pointer shadow-btn"
                       title="Eliminar Registro"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -385,16 +424,17 @@ export default function MaintenancePage() {
                   </div>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* CRUD Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-lg shadow-modal overflow-hidden animate-scale-up my-8">
             
             {/* Header */}
             <div className="p-6 border-b border-border flex items-center justify-between">
@@ -478,18 +518,13 @@ export default function MaintenancePage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Presupuesto Estimado ({currencySymbol})
-                  </label>
-                  <input
-                    type="number"
-                    value={estimatedCost}
-                    onChange={(e) => setEstimatedCost(e.target.value)}
-                    placeholder="Ej: 150000"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none focus:ring-1 focus:ring-ring font-semibold"
-                  />
-                </div>
+                <SmartInput
+                  label={`Presupuesto Estimado (${currencySymbol})`}
+                  value={estimatedCost}
+                  onChange={setEstimatedCost}
+                  formatType="currency"
+                  placeholder="Ej: $ 150.000"
+                />
               </div>
 
               {/* Step 5: Contractor details */}

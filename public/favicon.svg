@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0F172A" />
+  
+  <g transform="translate(0, 0)">
+    <!-- Main house structure -->
+    <path d="M16 2L2 13.2V30.8C2 31.5 2.5 32 3.2 32H13.6C14.15 32 14.6 31.55 14.6 31V20.6H17.4V31C17.4 31.55 17.85 32 18.4 32H28.8C29.5 32 30 31.5 30 30.8V13.2L16 2Z" fill="url(#blue-grad-fav)" />
+    <!-- Overlapping checkmark -->
+    <path d="M12.5 15.5L16.5 19.5L25.5 10.5L23.5 8.5L16.5 15.5L14.5 13.5L12.5 15.5Z" fill="#38BDF8" />
+  </g>
+
+  <defs>
+    <linearGradient id="blue-grad-fav" x1="2" y1="2" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+  </defs>
+</svg>

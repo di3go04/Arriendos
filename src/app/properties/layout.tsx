@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/shared/Sidebar';
@@ -15,6 +15,7 @@ export default function PropertiesLayout({
 }) {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,13 +40,16 @@ export default function PropertiesLayout({
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Sidebar for Desktop */}
-      <Sidebar className="hidden md:flex" />
+      {/* Sidebar for Desktop & Mobile */}
+      <Sidebar 
+        isOpenMobile={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen relative pb-16 md:pb-0">
         {/* Top Header Navbar */}
-        <Navbar />
+        <Navbar onMenuClick={() => setMobileMenuOpen(true)} />
 
         {/* Dynamic Nested Sub-page content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full">

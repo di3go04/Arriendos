@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 36" fill="none">
+  <!-- Isotype -->
+  <g transform="translate(2, 2)">
+    <!-- Main house structure / dynamic blue polygon -->
+    <path d="M16 0L2 11.2V28.8C2 30.1255 3.07452 32 4.4 32H13.6C14.1523 32 14.6 31.5523 14.6 31V21.6H17.4V31C17.4 31.5523 17.8477 32 18.4 32H27.6C28.9255 32 30 30.1255 30 28.8V11.2L16 0Z" fill="url(#blue-grad-1)" />
+    <!-- Overlapping lightning / speed check in lighter blue representing 'Now' -->
+    <path d="M12.5 13.5L16.5 17.5L25.5 8.5L23.5 6.5L16.5 13.5L14.5 11.5L12.5 13.5Z" fill="#38BDF8" filter="url(#glow)" />
+  </g>
+
+  <!-- Brand Text -->
+  <text x="40" y="24.5" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="900" fill="currentColor" letter-spacing="-0.03em">
+    Rent<tspan fill="#3B82F6">Now</tspan>
+  </text>
+
+  <defs>
+    <!-- Gradient for main isotype -->
+    <linearGradient id="blue-grad-1" x1="2" y1="0" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <!-- Glow effect for checkmark -->
+    <filter id="glow" x="10.5" y="4.5" width="17" height="15" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="0.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+</svg>

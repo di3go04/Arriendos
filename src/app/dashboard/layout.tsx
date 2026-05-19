@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/shared/Sidebar';
@@ -15,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Route protection
   useEffect(() => {
@@ -41,19 +42,38 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       
-      {/* Sidebar for Desktop */}
-      <Sidebar className="hidden md:flex" />
+      {/* Sidebar for Desktop & Mobile */}
+      <Sidebar 
+        isOpenMobile={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen relative pb-16 md:pb-0">
         
         {/* Top Header Navbar */}
-        <Navbar />
+        <Navbar onMenuClick={() => setMobileMenuOpen(true)} />
 
         {/* Dynamic Nested Sub-page content */}
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full">
           {children}
         </main>
+
+        {/* Global Dashboard Footer */}
+        <footer className="py-6 px-6 md:px-8 border-t border-border bg-card/30 text-muted-foreground flex flex-col md:flex-row items-center justify-between gap-4 shrink-0 text-xs mt-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center">
+              <img src="/logo.svg" alt="RentNow" className="h-5 w-auto dark:hidden" />
+              <img src="/logo-light.svg" alt="RentNow" className="h-5 w-auto hidden dark:block" />
+            </div>
+            <span className="text-[10px] sm:text-xs text-ink-muted">© {new Date().getFullYear()} RentNow. Todos los derechos reservados.</span>
+          </div>
+          <div className="flex items-center gap-4 font-medium text-ink-tertiary">
+            <a href="#" className="hover:text-primary transition-colors">Términos de servicio</a>
+            <a href="#" className="hover:text-primary transition-colors">Políticas de privacidad</a>
+            <a href="#" className="hover:text-primary transition-colors">Soporte técnico</a>
+          </div>
+        </footer>
       </div>
 
       {/* Navigation for Mobile devices */}

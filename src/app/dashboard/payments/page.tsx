@@ -1,454 +1,303 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Payment, Property } from '@/types';
+import { useToast } from '@/components/ui/Toast';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { usePayments, formatCOP, getPaymentStatus, PAYMENT_METHODS, STATUS_OPTS } from './usePayments';
 import {
-  DollarSign,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  Search,
-  Filter,
-  Calendar,
-  X,
-  CreditCard,
-  Check,
-  Building,
-  Loader2,
-  FileText,
-  UploadCloud,
-  ExternalLink,
-  Coins
+  DollarSign, CheckCircle2, Clock, AlertTriangle, Search,
+  X, Loader2, UploadCloud, ExternalLink, Coins, TrendingUp,
+  Eye, Building2, User, Filter, ChevronDown, Receipt
 } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import confetti from 'canvas-confetti';
 
 export default function PaymentsPage() {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   
-  const [payments, setPayments] = useState<any[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterPropertyId, setFilterPropertyId] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const {
+    payments, filtered, contracts, properties, loading, error, isLandlord, today, totals, fetchData,
+    search, setSearch, filterPropertyId, setFilterPropertyId, filterContractId, setFilterContractId,
+    filterStatus, setFilterStatus, filterDateFrom, setFilterDateFrom, filterDateTo, setFilterDateTo,
+  } = usePayments(user, profile);
 
-  // Tenant Payment Modal config
-  const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
-  const [reportingPayment, setReportingPayment] = useState<any | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState('Transferencia Bancaria');
-  const [receiptUrl, setReceiptUrl] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-  // Landlord Reconciliation Modal config
-  const [isLandlordModalOpen, setIsLandlordModalOpen] = useState(false);
-  const [reconcilingPayment, setReconcilingPayment] = useState<any | null>(null);
-  const [reconciliationNotes, setReconciliationNotes] = useState('');
+  // Reconcile state
+  const [reconcilePayment, setReconcilePayment] = useState<any | null>(null);
+  const [reconcileDate, setReconcileDate] = useState('');
+  const [reconcileMethod, setReconcileMethod] = useState('Efectivo');
+  const [reconcileNotes, setReconcileNotes] = useState('');
+  const [reconciling, setReconciling] = useState(false);
 
-  useEffect(() => {
-    if (user && profile) {
-      fetchPaymentsData();
-    }
-  }, [user, profile]);
+  // Register state
+  const [registerPayment, setRegisterPayment] = useState<any | null>(null);
+  const [registerMethod, setRegisterMethod] = useState('Transferencia Bancaria');
+  const [registerFile, setRegisterFile] = useState<File | null>(null);
+  const [registerUploading, setRegisterUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchPaymentsData = async () => {
-    setIsLoading(true);
+  const handleReconcile = async () => {
+    if (!reconcilePayment || !reconcileDate) return;
+    setReconciling(true);
     try {
-      // 1. Fetch properties (only if landlord)
-      if (profile?.role === 'arrendador') {
-        const { data: props } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('owner_id', user?.id);
-        setProperties(props || []);
-      }
-
-      // 2. Fetch payments with joins
-      let query = supabase
-        .from('payments')
-        .select(`
-          *,
-          contract:contracts (
-            id,
-            contract_number,
-            monthly_rent,
-            property:properties (id, title, address, owner_id),
-            landlord:profiles!contracts_landlord_id_fkey (id, full_name, phone),
-            tenant:profiles!contracts_tenant_id_fkey (id, full_name, phone)
-          )
-        `);
-
-      if (profile?.role === 'arrendatario') {
-        query = query.eq('tenant_id', user?.id);
-      } else {
-        // Landlord sees all payments of contracts where landlord_id = user.id
-        query = query.eq('contract.landlord_id', user?.id);
-      }
-
-      const { data: pays, error } = await query.order('due_date', { ascending: false });
+      const { error } = await supabase.from('payments').update({
+        paid: true, paid_at: new Date(reconcileDate).toISOString(),
+        payment_method: reconcileMethod, notes: reconcileNotes || null
+      }).eq('id', reconcilePayment.id);
       if (error) throw error;
 
-      // Filter out payments where contract join is null (if any DB inconsistency)
-      const sanitizedPays = (pays || []).filter(p => p.contract !== null);
-      setPayments(sanitizedPays);
-    } catch (err) {
-      console.error('Error fetching payments ledger:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Open reporting modal for Tenant
-  const handleOpenReportModal = (pay: any) => {
-    setReportingPayment(pay);
-    setPaymentMethod('Transferencia Bancaria');
-    setReceiptUrl('');
-    setIsTenantModalOpen(true);
-  };
-
-  // Submit payment receipt as Tenant
-  const handleSubmitReceipt = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reportingPayment) return;
-
-    if (!receiptUrl.trim()) {
-      alert('Por favor agrega una URL de comprobante válida.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          payment_method: paymentMethod,
-          receipt_url: receiptUrl.trim()
-        })
-        .eq('id', reportingPayment.id);
-
-      if (error) throw error;
-
-      confetti({ particleCount: 60, spread: 50 });
-      setIsTenantModalOpen(false);
-      fetchPaymentsData();
-    } catch (err) {
-      console.error('Error uploading payment receipt:', err);
-      alert('Error al reportar el comprobante de pago.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Open reconciliation modal for Landlord
-  const handleOpenReconcileModal = (pay: any) => {
-    setReconcilingPayment(pay);
-    setReconciliationNotes('');
-    setIsLandlordModalOpen(true);
-  };
-
-  // Approve / Reconcile Payment as Landlord
-  const handleReconcilePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reconcilingPayment) return;
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          paid: true,
-          paid_at: new Date().toISOString(),
-          payment_method: reconcilingPayment.payment_method || 'Manual',
-          receipt_url: reconcilingPayment.receipt_url || reconciliationNotes || 'Manual'
-        })
-        .eq('id', reconcilingPayment.id);
-
-      if (error) throw error;
-
-      // Celebrate cash arrival!
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#34d399', '#3b82f6', '#fbbf24']
+      await supabase.from('notifications').insert({
+        user_id: reconcilePayment.tenant_id, contract_id: reconcilePayment.contract_id,
+        type: 'pago_validado', title: 'Pago validado',
+        message: `Tu pago de ${formatCOP(reconcilePayment.amount)} ha sido validado.`,
       });
+      await supabase.functions.invoke('send-notification', {
+        body: { type: 'pago_validado', userId: reconcilePayment.tenant_id, contractId: reconcilePayment.contract_id }
+      }).catch(() => {});
 
-      setIsLandlordModalOpen(false);
-      fetchPaymentsData();
+      setSuccessMsg('Pago marcado como pagado exitosamente.');
+      setReconcilePayment(null);
+      fetchData();
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      console.error('Error reconciling payment:', err);
-      alert('Error al intentar reconciliar el cobro.');
-    } finally {
-      setIsSubmitting(false);
-    }
+      console.error(err);
+      toast({ type: 'error', message: 'Error al conciliar el pago.' });
+    } finally { setReconciling(false); }
   };
 
-  // Client-side filtering
-  const filteredPayments = payments.filter(p => {
-    const tenantName = p.contract?.tenant?.full_name?.toLowerCase() || '';
-    const propTitle = p.contract?.property?.title?.toLowerCase() || '';
-    const propId = p.contract?.property?.id || '';
-    const searchLower = searchQuery.toLowerCase();
+  const handleRegisterPayment = async () => {
+    if (!registerPayment || !registerFile) return;
+    setRegisterUploading(true);
+    try {
+      const ext = registerFile.name.split('.').pop();
+      const fileName = `receipt_${registerPayment.id}_${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from('payment-receipts').upload(fileName, registerFile);
+      if (uploadErr) throw uploadErr;
 
-    const matchesSearch = tenantName.includes(searchLower) || propTitle.includes(searchLower);
-    const matchesProperty = filterPropertyId === 'all' || propId === filterPropertyId;
-    
-    const today = new Date();
-    const isOverdue = new Date(p.due_date) < today && !p.paid;
-    
-    let computedStatus = 'pending';
-    if (p.paid) computedStatus = 'paid';
-    else if (p.receipt_url) computedStatus = 'verifying';
-    else if (isOverdue) computedStatus = 'overdue';
+      const { data: { publicUrl } } = supabase.storage.from('payment-receipts').getPublicUrl(fileName);
 
-    const matchesStatus = filterStatus === 'all' || computedStatus === filterStatus;
+      const { error: updateErr } = await supabase.from('payments').update({
+        payment_method: registerMethod, receipt_url: publicUrl
+      }).eq('id', registerPayment.id);
+      if (updateErr) throw updateErr;
 
-    return matchesSearch && matchesProperty && matchesStatus;
-  });
+      await supabase.from('notifications').insert({
+        user_id: registerPayment.contract?.landlord_id, contract_id: registerPayment.contract_id,
+        type: 'pago_registrado', title: 'Nuevo comprobante',
+        message: `Se ha subido un comprobante de pago de ${formatCOP(registerPayment.amount)}.`,
+      });
+      await supabase.functions.invoke('send-notification', {
+        body: { type: 'pago_registrado', userId: registerPayment.contract?.landlord_id, contractId: registerPayment.contract_id }
+      }).catch(() => {});
 
-  const getStatusBadge = (p: any) => {
-    const today = new Date();
-    const isOverdue = new Date(p.due_date) < today && !p.paid;
+      setSuccessMsg('Comprobante subido. En revisión.');
+      setRegisterPayment(null);
+      setRegisterFile(null);
+      fetchData();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      console.error(err);
+      toast({ type: 'error', message: 'Error al registrar el pago.' });
+    } finally { setRegisterUploading(false); }
+  };
 
-    if (p.paid) {
-      return (
-        <span className="inline-flex items-center gap-1 bg-success/10 border border-success/20 text-success text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <CheckCircle className="w-3.5 h-3.5" /> Pagado
-        </span>
-      );
-    }
-
-    if (p.receipt_url) {
-      return (
-        <span className="inline-flex items-center gap-1 bg-info/10 border border-info/20 text-info text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
-          <UploadCloud className="w-3.5 h-3.5" /> Verificando
-        </span>
-      );
-    }
-
-    if (isOverdue) {
-      const daysLate = differenceInDays(today, new Date(p.due_date));
-      return (
-        <span className="inline-flex items-center gap-1 bg-destructive/10 border border-destructive/20 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-full">
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive" /> En Mora ({daysLate}d)
-        </span>
-      );
-    }
-
+  if (!user || !profile || loading) {
     return (
-      <span className="inline-flex items-center gap-1 bg-warning/10 border border-warning/20 text-warning text-[10px] font-bold px-2 py-0.5 rounded-full">
-        <Clock className="w-3.5 h-3.5" /> Pendiente
-      </span>
+      <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Skeleton className="h-28 w-full" /><Skeleton className="h-28 w-full" /><Skeleton className="h-28 w-full" />
+        </div>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      
-      {/* Top Header */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Finanzas y Transacciones
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-24">
+      {successMsg && (
+        <div className="fixed top-20 right-6 z-50 bg-success text-success-foreground px-4 py-3 rounded-lg shadow-modal text-xs font-semibold flex items-center gap-2 animate-slide-in-right">
+          <CheckCircle2 className="w-4 h-4" /> {successMsg}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {isLandlord ? 'Cobros y Conciliación' : 'Mis Pagos'}
+        </h1>
+        <p className="text-sm text-ink-muted">
+          {isLandlord ? 'Gestiona el flujo de caja y valida los pagos de tus inquilinos.' : 'Historial de pagos y subida de comprobantes.'}
         </p>
-        <h2 className="text-xl md:text-2xl font-black text-foreground">
-          {profile?.role === 'arrendador' 
-            ? 'Historial y Conciliación de Cobros' 
-            : 'Mi Agenda y Control de Pagos'}
-        </h2>
       </div>
 
-      {/* Advanced Filter Drawer */}
-      <div className="bg-card border border-border p-4 rounded-2xl flex flex-col md:flex-row gap-4">
-        
-        {/* Search */}
-        <div className="relative flex-1">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-muted-foreground pointer-events-none">
-            <Search className="w-4 h-4" />
-          </span>
-          <input
-            type="text"
-            placeholder={profile?.role === 'arrendador' ? "Buscar por inquilino o propiedad..." : "Buscar por propiedad..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-muted border border-border text-foreground text-xs rounded-lg focus:ring-1 focus:ring-ring block pl-9 p-2.5 outline-none"
-          />
+      {isLandlord && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Cobrado</span>
+              <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <TrendingUp className="w-4 h-4 text-success" />
+              </div>
+            </div>
+            <div>
+              <span className="block text-3xl font-extrabold tabular-nums text-foreground">{formatCOP(totals.paid)}</span>
+              <span className="text-[11px] font-semibold text-ink-muted mt-1">Total recibido</span>
+            </div>
+          </div>
+          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Pendiente</span>
+              <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="w-4 h-4 text-warning" />
+              </div>
+            </div>
+            <div>
+              <span className="block text-3xl font-extrabold tabular-nums text-foreground">{formatCOP(totals.pending)}</span>
+              <span className="text-[11px] font-semibold text-ink-muted mt-1">Por cobrar</span>
+            </div>
+          </div>
+          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Morosidad</span>
+              <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+              </div>
+            </div>
+            <div>
+              <span className="block text-3xl font-extrabold tabular-nums text-foreground">{formatCOP(totals.overdue)}</span>
+              <span className="text-[11px] font-semibold text-ink-muted mt-1">{totals.morosity}% de los pendientes</span>
+            </div>
+          </div>
         </div>
+      )}
 
-        {/* Filter by Property (only for Landlord) */}
-        {profile?.role === 'arrendador' && (
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-            <select
-              value={filterPropertyId}
-              onChange={(e) => setFilterPropertyId(e.target.value)}
-              className="bg-muted text-foreground text-xs font-semibold rounded-lg border border-border p-2.5 w-full md:w-48 outline-none cursor-pointer"
-            >
-              <option value="all">Todas las Propiedades</option>
-              {properties.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+      <div className="bg-card border border-border rounded-xl p-4 shadow-card">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" />
+            <input id="payment-search" name="paymentSearch"
+              type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder={isLandlord ? 'Buscar por inquilino, propiedad...' : 'Buscar por propiedad...'}
+              className="w-full bg-background border border-border text-foreground text-xs rounded-lg pl-9 p-2.5 outline-none focus:ring-1 focus:ring-ring focus:border-ring"
+            />
+          </div>
+
+          <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-muted border border-border rounded-lg text-xs font-semibold text-foreground">
+            <Filter className="w-4 h-4" /> Filtros <ChevronDown className={`w-4 h-4 transition-transform ${showMobileFilters ? 'rotate-180' : ''}`} />
+          </button>
+
+          <div className={`${showMobileFilters ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-2`}>
+            {isLandlord && (
+              <>
+                <select value={filterPropertyId} onChange={e => { setFilterPropertyId(e.target.value); setFilterContractId('all'); }} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
+                  <option value="all">Todas las propiedades</option>
+                  {properties.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+                <select value={filterContractId} onChange={e => setFilterContractId(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
+                  <option value="all">Todos los contratos</option>
+                  {contracts.map(c => <option key={c.id} value={c.id}>#{c.contract_number || c.id.slice(0, 8)}</option>)}
+                </select>
+              </>
+            )}
+            <div className="flex bg-muted p-1 rounded-lg overflow-x-auto snap-x hide-scrollbar shrink-0 max-w-full">
+              {STATUS_OPTS.map(o => (
+                <button
+                  key={o.value}
+                  onClick={() => setFilterStatus(o.value)}
+                  className={`snap-center shrink-0 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 ${
+                    filterStatus === o.value
+                      ? 'bg-primary text-primary-foreground shadow-btn scale-100'
+                      : 'bg-transparent text-ink-muted hover:text-foreground hover:bg-background/50 scale-95 hover:scale-100'
+                  }`}
+                >
+                  {o.label}
+                </button>
               ))}
-            </select>
+            </div>
+            <input id="filter-date-from" name="filterDateFrom" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Desde" />
+            <input id="filter-date-to" name="filterDateTo" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Hasta" />
           </div>
-        )}
-
-        {/* Filter by Status */}
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-muted text-foreground text-xs font-semibold rounded-lg border border-border p-2.5 w-full md:w-44 outline-none cursor-pointer"
-        >
-          <option value="all">Cualquier Estado</option>
-          <option value="paid">Pagados</option>
-          <option value="verifying">Esperando Verificación</option>
-          <option value="pending">Pendientes</option>
-          <option value="overdue">Vencidos (En Mora)</option>
-        </select>
+        </div>
       </div>
 
-      {/* Main Ledger Grid/Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      ) : filteredPayments.length === 0 ? (
-        <div className="py-16 text-center bg-card border border-dashed border-border rounded-3xl max-w-xl mx-auto space-y-4">
-          <div className="p-4 bg-muted rounded-full inline-flex text-muted-foreground">
-            <DollarSign className="w-10 h-10" />
+      {filtered.length === 0 ? (
+        <div className="py-24 text-center bg-muted/30 border border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5">
+            <Receipt className="w-8 h-8 text-ink-muted" />
           </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-base text-foreground">No hay cobros calendarizados</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
-              Los registros se crean al activar un contrato de arrendamiento digital firmado.
-            </p>
-          </div>
+          <h3 className="font-bold text-base text-foreground">No hay pagos</h3>
+          <p className="text-xs text-ink-muted mt-1.5 font-medium">No se encontraron registros financieros con los filtros actuales.</p>
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-card border-none rounded-xl overflow-hidden shadow-card">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-muted/40 border-b border-border text-muted-foreground font-bold text-[10px] uppercase tracking-wider">
-                  <th className="px-6 py-4">{profile?.role === 'arrendador' ? 'Inquilino' : 'Propietario'}</th>
-                  <th className="px-6 py-4">Propiedad</th>
-                  <th className="px-6 py-4">Fecha Vence</th>
-                  <th className="px-6 py-4">Monto Billed</th>
-                  <th className="px-6 py-4">Estado</th>
-                  <th className="px-6 py-4">Método / Soporte</th>
-                  <th className="px-6 py-4 text-right">Acción</th>
+                <tr className="bg-muted border-b border-border text-ink-secondary text-[11px] font-semibold uppercase tracking-wider">
+                  <th className="px-5 py-3">{isLandlord ? 'Inquilino' : 'Arrendador'}</th>
+                  <th className="px-5 py-3">Propiedad & Contrato</th>
+                  <th className="px-5 py-3">Mes</th>
+                  <th className="px-5 py-3">Monto & Vencimiento</th>
+                  <th className="px-5 py-3">Estado</th>
+                  <th className="px-5 py-3 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/60">
-                {filteredPayments.map((p) => {
-                  const partnerName = profile?.role === 'arrendador' 
-                    ? (p.contract?.tenant?.full_name || 'Desconocido') 
-                    : (p.contract?.landlord?.full_name || 'Desconocido');
-                  const propTitle = p.contract?.property?.title || 'Inmueble';
-
+              <tbody className="divide-y divide-border">
+                {filtered.map(p => {
+                  const status = getPaymentStatus(p, today);
+                  const partner = isLandlord ? p.contract?.tenant : p.contract?.landlord;
                   return (
-                    <tr key={p.id} className="hover:bg-muted/10 transition-colors group">
-                      
-                      {/* Partner name */}
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-foreground block text-sm">
-                          {partnerName}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground block mt-0.5">
-                          Contrato: {p.contract?.contract_number}
-                        </span>
+                    <tr key={p.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="font-semibold text-foreground">{partner?.full_name || '—'}</div>
+                        <div className="text-[11px] text-ink-muted">{partner?.phone || 'Sin teléfono'}</div>
                       </td>
-
-                      {/* Property */}
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-foreground block">
-                          {propTitle}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground block truncate max-w-[150px]">
-                          {p.contract?.property?.address}
-                        </span>
+                      <td className="px-5 py-4">
+                        <div className="font-medium text-foreground">{p.contract?.property?.title || '—'}</div>
+                        <div className="text-[10px] font-mono text-ink-muted">#{p.contract?.contract_number || p.contract_id?.slice(0, 8)}</div>
                       </td>
-
-                      {/* Due Date */}
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-foreground flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          {format(new Date(p.due_date), 'dd MMM yyyy', { locale: es })}
-                        </span>
+                      <td className="px-5 py-4 text-ink-secondary text-xs">{p.month_year || '—'}</td>
+                      <td className="px-5 py-4">
+                        <div className="font-bold tabular-nums text-foreground">{formatCOP(p.amount)}</div>
+                        <div className="text-[11px] text-ink-muted">{format(parseISO(p.due_date), 'dd/MMM/yyyy', { locale: es })}</div>
                       </td>
-
-                      {/* Amount */}
-                      <td className="px-6 py-4">
-                        <span className="font-black text-foreground text-sm block">
-                          ${p.amount?.toLocaleString('es-CO')}
-                        </span>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-semibold ${status.cls}`}>
+                            {status.label}
+                          </span>
+                          {p.receipt_url && !p.paid && (
+                            <span className="text-[10px] font-semibold text-warning">Comprobante en revisión</span>
+                          )}
+                          {p.receipt_url && p.paid && (
+                            <button onClick={() => setReceiptPreview(p.receipt_url)} className="text-[10px] font-medium text-primary hover:underline flex items-center gap-1">
+                              <Eye className="w-3 h-3" /> Ver recibo
+                            </button>
+                          )}
+                        </div>
                       </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        {getStatusBadge(p)}
-                      </td>
-
-                      {/* Payment method/notes/receipt */}
-                      <td className="px-6 py-4 max-w-[200px]">
-                        {p.paid ? (
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] text-success font-bold flex items-center gap-1">
-                              <Check className="w-3.5 h-3.5" /> Pago: {p.paid_at ? new Date(p.paid_at).toLocaleDateString('es-CO') : 'Manual'}
-                            </span>
-                            <span className="text-[9px] text-muted-foreground block">
-                              Método: {p.payment_method || 'Efectivo'}
-                            </span>
-                          </div>
-                        ) : p.receipt_url ? (
-                          <div className="space-y-1">
-                            <span className="text-[10px] text-primary font-bold block">
-                              Reportado ({p.payment_method})
-                            </span>
-                            <a
-                              href={p.receipt_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[9px] text-primary hover:underline inline-flex items-center gap-0.5 font-bold"
-                            >
-                              Ver Comprobante <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          </div>
+                      <td className="px-5 py-4 text-right">
+                        {isLandlord && !p.paid ? (
+                          <button onClick={() => { setReconcilePayment(p); setReconcileDate(format(today, 'yyyy-MM-dd')); setReconcileMethod('Efectivo'); setReconcileNotes(''); }}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${p.receipt_url ? 'bg-primary text-primary-foreground hover:bg-primary-hover shadow-btn' : 'bg-success/10 border border-success/20 text-success hover:bg-success hover:text-success-foreground'}`}>
+                            <Coins className="w-3.5 h-3.5" /> {p.receipt_url ? 'Validar recibo' : 'Marcar pagado'}
+                          </button>
+                        ) : !isLandlord && !p.paid && !p.receipt_url ? (
+                          <button onClick={() => { setRegisterPayment(p); setRegisterMethod('Transferencia Bancaria'); setRegisterFile(null); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted border border-border text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors">
+                            <UploadCloud className="w-3.5 h-3.5" /> Registrar pago
+                          </button>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground italic">Esperando cobro</span>
+                          <span className="text-[11px] text-ink-muted italic">—</span>
                         )}
                       </td>
-
-                      {/* Action buttons */}
-                      <td className="px-6 py-4 text-right">
-                        {/* Landlord Actions */}
-                        {profile?.role === 'arrendador' && !p.paid && (
-                          <button
-                            onClick={() => handleOpenReconcileModal(p)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-all text-[11px] cursor-pointer ${
-                              p.receipt_url
-                                ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/10 animate-bounce'
-                                : 'bg-success/15 border border-success/20 text-success hover:bg-success hover:text-success-foreground'
-                            }`}
-                          >
-                            <Coins className="w-3.5 h-3.5" />
-                            <span>{p.receipt_url ? 'Reconciliar Recibo' : 'Recibir Pago'}</span>
-                          </button>
-                        )}
-
-                        {/* Tenant Actions */}
-                        {profile?.role === 'arrendatario' && !p.paid && !p.receipt_url && (
-                          <button
-                            onClick={() => handleOpenReportModal(p)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 border border-primary/20 text-primary rounded-lg font-bold hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
-                          >
-                            <UploadCloud className="w-3.5 h-3.5" /> Reportar Pago
-                          </button>
-                        )}
-                      </td>
-
                     </tr>
                   );
                 })}
@@ -458,197 +307,118 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* TENANT REPORT PAYMENT MODAL */}
-      {isTenantModalOpen && reportingPayment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-scale-up">
-            <div className="p-6 border-b border-border flex items-center justify-between">
-              <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
-                <UploadCloud className="w-5 h-5 text-primary animate-pulse" />
-                Reportar Soporte de Pago
+      {/* Modals go here, same logic but styled with standard variables */}
+      {reconcilePayment && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setReconcilePayment(null)}>
+          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                <Coins className="w-4 h-4 text-success" /> Validar Pago
               </h3>
-              <button
-                onClick={() => setIsTenantModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setReconcilePayment(null)} className="p-1 rounded-md hover:bg-muted text-ink-muted"><X className="w-4 h-4" /></button>
             </div>
-
-            <form onSubmit={handleSubmitReceipt} className="p-6 space-y-4">
-              
-              <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Propietario:</span>
-                  <span className="font-bold text-foreground">{reportingPayment.contract?.landlord?.full_name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mes / Periodo:</span>
-                  <span className="font-bold text-foreground">{reportingPayment.month_year}</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-border mt-1">
-                  <span className="text-muted-foreground font-semibold">Valor a Declarar:</span>
-                  <span className="font-black text-sm text-primary">
-                    ${reportingPayment.amount?.toLocaleString('es-CO')}
-                  </span>
-                </div>
+            <div className="p-5 space-y-4">
+              <div className="bg-muted border border-border rounded-lg p-3 text-xs space-y-1.5">
+                <div className="flex justify-between"><span className="text-ink-muted">Inquilino:</span><span className="font-medium text-foreground">{reconcilePayment.contract?.tenant?.full_name}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Valor:</span><span className="font-bold tabular-nums text-foreground">{formatCOP(reconcilePayment.amount)}</span></div>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Medio de Transacción
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none font-semibold cursor-pointer"
-                >
-                  <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                  <option value="Nequi">Nequi</option>
-                  <option value="Daviplata">Daviplata</option>
-                  <option value="Efectivo">Efectivo directamente</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  URL del Comprobante / Recibo Digital
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={receiptUrl}
-                  onChange={(e) => setReceiptUrl(e.target.value)}
-                  placeholder="https://imgur.com/recibo.png"
-                  className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none"
-                />
-                <span className="text-[10px] text-muted-foreground mt-1.5 block">
-                  * Sube la foto del recibo a un host (Imgur, Unsplash, Google Drive) y pega el enlace directo aquí.
-                </span>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsTenantModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-                >
-                  Cancelar
+              {reconcilePayment.receipt_url && (
+                <button onClick={() => setReceiptPreview(reconcilePayment.receipt_url)} className="w-full py-2 bg-primary/5 border border-primary/20 rounded-lg text-xs font-medium text-primary flex justify-center items-center gap-2 hover:bg-primary/10 transition-colors">
+                  <Eye className="w-4 h-4" /> Ver comprobante adjunto
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-md shadow-primary/10 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Guardando comprobante...</span>
-                    </>
-                  ) : (
-                    <span>Subir Comprobante</span>
-                  )}
+              )}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Fecha de pago</label>
+                  <input id="reconcile-date" name="reconcileDate" type="date" value={reconcileDate} onChange={e => setReconcileDate(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Método</label>
+                  <select value={reconcileMethod} onChange={e => setReconcileMethod(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
+                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Notas (Opcional)</label>
+                  <textarea value={reconcileNotes} onChange={e => setReconcileNotes(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" rows={2} />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setReconcilePayment(null)} className="px-4 py-2 text-xs font-medium text-ink-secondary border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
+                <button onClick={handleReconcile} disabled={reconciling || !reconcileDate} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-btn hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
+                  {reconciling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Confirmar
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* LANDLORD RECONCILIATION MODAL */}
-      {isLandlordModalOpen && reconcilingPayment && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-scale-up">
-            <div className="p-6 border-b border-border flex items-center justify-between">
-              <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-success" />
-                Conciliación y Verificación de Caja
+      {registerPayment && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setRegisterPayment(null)}>
+          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                <UploadCloud className="w-4 h-4 text-primary" /> Registrar Pago
               </h3>
-              <button
-                onClick={() => setIsLandlordModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setRegisterPayment(null)} className="p-1 rounded-md hover:bg-muted text-ink-muted"><X className="w-4 h-4" /></button>
             </div>
-
-            <form onSubmit={handleReconcilePayment} className="p-6 space-y-4">
-              
-              <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inquilino Emisor:</span>
-                  <span className="font-bold text-foreground">{reconcilingPayment.contract?.tenant?.full_name}</span>
+            <div className="p-5 space-y-4">
+              <div className="bg-muted border border-border rounded-lg p-3 text-xs space-y-1.5">
+                <div className="flex justify-between"><span className="text-ink-muted">Valor:</span><span className="font-bold tabular-nums text-foreground">{formatCOP(registerPayment.amount)}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Vencimiento:</span><span className="font-medium text-foreground">{format(parseISO(registerPayment.due_date), 'dd/MMM/yyyy')}</span></div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Método</label>
+                  <select value={registerMethod} onChange={e => setRegisterMethod(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
+                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Propiedad Renta:</span>
-                  <span className="font-bold text-foreground">{reconcilingPayment.contract?.property?.title}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mes Correspondiente:</span>
-                  <span className="font-bold text-foreground">{reconcilingPayment.month_year}</span>
-                </div>
-                {reconcilingPayment.receipt_url && (
-                  <div className="flex justify-between items-center pt-2 border-t border-border mt-1">
-                    <span className="text-muted-foreground font-semibold">Comprobante Inquilino:</span>
-                    <a
-                      href={reconcilingPayment.receipt_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary font-black flex items-center gap-0.5 hover:underline"
-                    >
-                      Ver Foto Soporte <ExternalLink className="w-3 h-3" />
-                    </a>
+                <div>
+                  <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Comprobante</label>
+                  <div onClick={() => fileInputRef.current?.click()} className={`border border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${registerFile ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}>
+                    {registerFile ? (
+                      <div className="space-y-1">
+                        <CheckCircle2 className="w-6 h-6 mx-auto text-success" />
+                        <p className="text-xs font-medium text-foreground">{registerFile.name}</p>
+                        <button onClick={(e) => { e.stopPropagation(); setRegisterFile(null); }} className="text-[10px] text-destructive hover:underline">Quitar</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-ink-muted">
+                        <UploadCloud className="w-6 h-6 mx-auto" />
+                        <p className="text-xs">Click para subir (PDF, JPG, PNG)</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="flex justify-between pt-2 border-t border-border mt-1">
-                  <span className="text-muted-foreground font-semibold">Valor Conciliable:</span>
-                  <span className="font-black text-sm text-success">
-                    ${reconcilingPayment.amount?.toLocaleString('es-CO')}
-                  </span>
+                  <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={e => setRegisterFile(e.target.files?.[0] || null)} className="hidden" />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Notas de Auditoría Interna
-                </label>
-                <textarea
-                  value={reconciliationNotes}
-                  onChange={(e) => setReconciliationNotes(e.target.value)}
-                  placeholder="Ej: Verificado saldo en cuenta de Bancolombia exitosamente."
-                  rows={3}
-                  className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none resize-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsLandlordModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-                >
-                  Cerrar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-success hover:bg-success/90 text-success-foreground text-xs font-bold shadow-md shadow-success/10 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Reconciliando...</span>
-                    </>
-                  ) : (
-                    <span>Conciliar Pago & Marcar Listo</span>
-                  )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setRegisterPayment(null)} className="px-4 py-2 text-xs font-medium text-ink-secondary border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
+                <button onClick={handleRegisterPayment} disabled={registerUploading || !registerFile} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-btn hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
+                  {registerUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5" />} Subir
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
+      {receiptPreview && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setReceiptPreview(null)}>
+          <div className="relative max-w-2xl w-full max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setReceiptPreview(null)} className="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+            {receiptPreview.endsWith('.pdf') ? (
+              <iframe src={receiptPreview} className="w-full h-[80vh] rounded-xl bg-card border border-border" />
+            ) : (
+              <img src={receiptPreview} alt="Comprobante" className="w-full rounded-xl shadow-2xl border border-border" />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

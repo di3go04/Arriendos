@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Property, Profile, ContractTemplate, Contract } from '@/types';
@@ -29,9 +30,14 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SmartInput } from '@/components/ui/SmartInput';
+import { ListSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function LeasesPage() {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -112,6 +118,7 @@ export default function LeasesPage() {
       setContracts(data || []);
     } catch (err) {
       console.error('Error fetching contracts:', err);
+      toast({ type: 'error', message: 'Error al cargar los contratos.' });
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +149,7 @@ export default function LeasesPage() {
       setTemplates(temps || []);
     } catch (err) {
       console.error('Error fetching dependencies:', err);
+      toast({ type: 'error', message: 'Error al cargar datos para crear contratos.' });
     }
   };
 
@@ -161,6 +169,7 @@ export default function LeasesPage() {
       setDocuments(data || []);
     } catch (err) {
       console.error('Error fetching documents:', err);
+      toast({ type: 'error', message: 'Error al cargar los documentos del contrato.' });
     } finally {
       setIsDocsLoading(false);
     }
@@ -189,7 +198,7 @@ export default function LeasesPage() {
       fetchDocuments(viewingContract.id);
     } catch (err) {
       console.error('Error uploading document:', err);
-      alert('Error al adjuntar el archivo.');
+      toast({ type: 'error', message: 'Error al adjuntar el archivo.' });
     } finally {
       setIsUploadingDoc(false);
     }
@@ -210,7 +219,7 @@ export default function LeasesPage() {
       }
     } catch (err) {
       console.error('Error deleting document:', err);
-      alert('Error al intentar eliminar el archivo.');
+      toast({ type: 'error', message: 'Error al intentar eliminar el archivo.' });
     }
   };
 
@@ -268,7 +277,7 @@ export default function LeasesPage() {
     const temp = templates.find(t => t.id === templateId);
 
     if (!prop || !ten || !temp) {
-      alert('Por favor selecciona propiedad, inquilino y plantilla.');
+      toast({ type: 'warning', message: 'Por favor selecciona propiedad, inquilino y plantilla.' });
       return;
     }
 
@@ -322,7 +331,7 @@ export default function LeasesPage() {
       fetchCreationDependencies();
     } catch (err: any) {
       console.error('Error creating contract:', err);
-      alert('Ocurrió un error al crear el contrato.');
+      toast({ type: 'error', message: 'Ocurrió un error al crear el contrato.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -373,30 +382,34 @@ export default function LeasesPage() {
 
   // Rescind / Cancel Contract
   const handleRescindContract = async (c: Contract) => {
-    if (!confirm('¿Estás seguro de que deseas rescindir este contrato? Se desactivará y la propiedad volverá a estar disponible.')) {
-      return;
-    }
+    // Optimistic UI Update
+    setContracts(prev => prev.map(contract => contract.id === c.id ? { ...contract, status: 'cancelado' } : contract));
+    
+    let cancelled = false;
+    toast({
+      type: 'success',
+      message: 'Contrato rescindido y archivado.',
+      onUndo: () => {
+        cancelled = true;
+        setContracts(prev => prev.map(contract => contract.id === c.id ? { ...contract, status: c.status } : contract));
+      }
+    });
 
-    try {
-      const { error } = await supabase
-        .from('contracts')
-        .update({ status: 'cancelado' })
-        .eq('id', c.id);
-
-      if (error) throw error;
-
-      await supabase
-        .from('properties')
-        .update({ status: 'disponible' })
-        .eq('id', c.property_id);
-
-      fetchContracts();
-      fetchCreationDependencies();
-      confetti({ particleCount: 50, colors: ['#ef4444', '#f87171'] });
-    } catch (err) {
-      console.error('Error rescinding contract:', err);
-      alert('Error al rescindir el contrato.');
-    }
+    setTimeout(async () => {
+      if (!cancelled) {
+        try {
+          const { error } = await supabase.from('contracts').update({ status: 'cancelado' }).eq('id', c.id);
+          if (error) throw error;
+          await supabase.from('properties').update({ status: 'disponible' }).eq('id', c.property_id);
+          fetchCreationDependencies();
+          confetti({ particleCount: 50, colors: ['#ef4444', '#f87171'] });
+        } catch (err) {
+          console.error('Error rescinding contract:', err);
+          setContracts(prev => prev.map(contract => contract.id === c.id ? { ...contract, status: c.status } : contract));
+          toast({ type: 'error', message: 'Error al rescindir el contrato en la nube.' });
+        }
+      }
+    }, 5500);
   };
 
   // Sign canvas operations
@@ -451,7 +464,7 @@ export default function LeasesPage() {
   const handleExecuteSignature = async () => {
     if (!signingContract || !profile) return;
     if (!signatureName.trim()) {
-      alert('Por favor escribe tu nombre para estampar la firma.');
+      toast({ type: 'warning', message: 'Por favor escribe tu nombre para estampar la firma.' });
       return;
     }
 
@@ -502,7 +515,7 @@ export default function LeasesPage() {
       fetchCreationDependencies();
     } catch (err) {
       console.error('Error signing contract:', err);
-      alert('Ocurrió un error al firmar el contrato.');
+      toast({ type: 'error', message: 'Ocurrió un error al firmar el contrato.' });
     }
   };
 
@@ -525,7 +538,7 @@ export default function LeasesPage() {
         {profile?.role === 'arrendador' && (
           <button
             onClick={handleOpenCreateModal}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/15 transition-all text-xs cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Emitir Contrato</span>
@@ -535,26 +548,30 @@ export default function LeasesPage() {
 
       {/* Grid List View */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <ListSkeleton count={4} />
       ) : contracts.length === 0 ? (
-        <div className="py-16 text-center bg-card border border-dashed border-border rounded-3xl max-w-xl mx-auto space-y-4">
-          <div className="p-4 bg-muted rounded-full inline-flex text-muted-foreground">
-            <FileText className="w-10 h-10" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-base text-foreground">No hay contratos registrados</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">
-              {profile?.role === 'arrendador'
-                ? 'Comienza emitiendo un contrato a partir de una plantilla y asócialo a un inquilino.'
-                : 'Aún no tienes contratos vinculados a tu correo electrónico.'}
-            </p>
-          </div>
-        </div>
+        <EmptyState 
+          icon={<FileText className="w-16 h-16" />}
+          title="No hay contratos registrados"
+          description={profile?.role === 'arrendador' 
+            ? 'Comienza emitiendo un contrato a partir de una plantilla y asócialo a un inquilino.' 
+            : 'Aún no tienes contratos vinculados a tu correo electrónico.'}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {contracts.map((c) => {
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1 }
+            }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <AnimatePresence>
+            {contracts.map((c) => {
             const hasSigned = profile?.role === 'arrendador' ? c.signed_by_landlord : c.signed_by_tenant;
             const statusLabels: Record<string, string> = {
               borrador: 'Borrador',
@@ -574,9 +591,15 @@ export default function LeasesPage() {
             };
 
             return (
-              <div
+              <motion.div
                 key={c.id}
-                className={`bg-card border rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-6 hover:shadow-md transition-all ${
+                layout
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={`bg-card border-none rounded-2xl p-6 shadow-card hover:shadow-card-hover flex flex-col justify-between space-y-6 transition-all ${
                   c.status === 'cancelado' ? 'opacity-70' : ''
                 }`}
               >
@@ -618,7 +641,7 @@ export default function LeasesPage() {
                     <span className="text-muted-foreground block text-[10px] font-semibold uppercase tracking-wider mb-1">
                       Canon Mensual
                     </span>
-                    <span className="font-black text-foreground block text-sm">
+                    <span className="font-black text-foreground block text-sm tabular-nums text-primary">
                       ${c.monthly_rent?.toLocaleString('es-CO')}/mes
                     </span>
                   </div>
@@ -627,7 +650,7 @@ export default function LeasesPage() {
                     <span className="text-muted-foreground block text-[10px] font-semibold uppercase tracking-wider mb-1">
                       Depósito
                     </span>
-                    <span className="font-semibold text-muted-foreground block">
+                    <span className="font-semibold text-muted-foreground block tabular-nums text-primary">
                       ${c.deposit?.toLocaleString('es-CO')}
                     </span>
                   </div>
@@ -676,7 +699,7 @@ export default function LeasesPage() {
                     {!hasSigned && c.status !== 'cancelado' && (
                       <button
                         onClick={() => handleOpenSignModal(c)}
-                        className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-sm shadow-primary/10"
+                        className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-btn hover:shadow-card-hover"
                       >
                         <PenTool className="w-3.5 h-3.5" />
                         <span>Firmar Digitalmente</span>
@@ -687,7 +710,7 @@ export default function LeasesPage() {
                     {profile?.role === 'arrendador' && c.status !== 'cancelado' && (
                       <button
                         onClick={() => handleRescindContract(c)}
-                        className="px-3.5 py-1.5 rounded-lg border border-destructive/20 text-destructive bg-destructive/5 hover:bg-destructive/10 text-[10px] font-bold transition-all cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-lg border-none text-destructive bg-destructive/10 hover:bg-destructive/20 text-[10px] font-bold shadow-btn transition-all cursor-pointer"
                       >
                         Rescindir
                       </button>
@@ -695,16 +718,17 @@ export default function LeasesPage() {
                   </div>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+          </AnimatePresence>
+        </motion.div>
       )}
 
       {/* CREATE CONTRACT MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-xl shadow-modal overflow-hidden animate-scale-up my-8">
             <div className="p-6 border-b border-border flex items-center justify-between">
               <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
                 <FileSignature className="w-5 h-5 text-primary" />
@@ -792,48 +816,31 @@ export default function LeasesPage() {
 
               {/* Financial values */}
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Renta Mensual ($)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={monthlyRent}
-                    onChange={(e) => setMonthlyRent(e.target.value)}
-                    placeholder="1200000"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none font-bold"
-                  />
-                </div>
+                <SmartInput
+                  label="Renta Mensual"
+                  required
+                  value={monthlyRent}
+                  onChange={setMonthlyRent}
+                  formatType="currency"
+                  placeholder="$ 1.200.000"
+                />
 
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Depósito ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={deposit}
-                    onChange={(e) => setDeposit(e.target.value)}
-                    placeholder="1200000"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none font-bold"
-                  />
-                </div>
+                <SmartInput
+                  label="Depósito"
+                  value={deposit}
+                  onChange={setDeposit}
+                  formatType="currency"
+                  placeholder="$ 1.200.000"
+                />
 
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Día de Pago
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    max="31"
-                    value={paymentDay}
-                    onChange={(e) => setPaymentDay(e.target.value)}
-                    placeholder="5"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none"
-                  />
-                </div>
+                <SmartInput
+                  label="Día de Pago"
+                  required
+                  value={paymentDay}
+                  onChange={setPaymentDay}
+                  formatType="id"
+                  placeholder="5"
+                />
               </div>
 
               {/* Dates */}
@@ -866,33 +873,23 @@ export default function LeasesPage() {
 
               {/* Personal Identification Documents */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Tu Cédula/ID (Arrendador)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={landlordDocId}
-                    onChange={(e) => setLandlordDocId(e.target.value)}
-                    placeholder="CC. 1.020.345.678"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none"
-                  />
-                </div>
+                <SmartInput
+                  label="Tu Cédula/ID (Arrendador)"
+                  required
+                  value={landlordDocId}
+                  onChange={setLandlordDocId}
+                  formatType="id"
+                  placeholder="CC. 1.020.345.678"
+                />
 
-                <div>
-                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                    Cédula/ID Inquilino
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={tenantDocId}
-                    onChange={(e) => setTenantDocId(e.target.value)}
-                    placeholder="CC. 98.765.432"
-                    className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none"
-                  />
-                </div>
+                <SmartInput
+                  label="Cédula/ID Inquilino"
+                  required
+                  value={tenantDocId}
+                  onChange={setTenantDocId}
+                  formatType="id"
+                  placeholder="CC. 98.765.432"
+                />
               </div>
 
               {/* System alerts */}
@@ -935,7 +932,7 @@ export default function LeasesPage() {
       {/* READ CONTRACT MODAL */}
       {viewingContract && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-3xl shadow-modal overflow-hidden animate-scale-up my-8">
             
             {/* Modal Header */}
             <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
@@ -961,12 +958,12 @@ export default function LeasesPage() {
                 onClick={() => setActiveViewerTab('contract')}
                 className={`py-3 text-xs font-bold transition-all relative ${
                   activeViewerTab === 'contract'
-                    ? 'text-primary animate-pulse'
+                    ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {activeViewerTab === 'contract' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  <motion.div layoutId="viewTabs" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                 )}
                 Documento Legal
               </button>
@@ -979,7 +976,7 @@ export default function LeasesPage() {
                 }`}
               >
                 {activeViewerTab === 'documents' && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  <motion.div layoutId="viewTabs" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                 )}
                 Anexos y Archivos ({documents.length})
               </button>
@@ -1160,7 +1157,7 @@ export default function LeasesPage() {
       {/* DRAWING SIGNATURE CANVAS MODAL */}
       {isSignModalOpen && signingContract && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-md shadow-modal overflow-hidden animate-scale-up my-8">
             <div className="p-5 border-b border-border flex items-center justify-between">
               <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                 <PenTool className="w-4 h-4 text-primary animate-pulse" />

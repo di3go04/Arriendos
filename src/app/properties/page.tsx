@@ -219,28 +219,26 @@ export default function PropertiesPage() {
     <div className="space-y-6 pb-24 animate-fade-in">
 
       {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/20 via-primary/5 to-background border border-primary/10 p-6 md:p-8">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-card border-none shadow-card p-6 md:p-8">
         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-bold text-ink-secondary uppercase tracking-widest">
               <AppWindow className="w-3.5 h-3.5 text-primary" />
               Panel de Inmuebles
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
               Mis Propiedades
-              <span className="text-sm font-bold text-muted-foreground bg-muted/60 border border-border px-3 py-1 rounded-full">
+              <span className="text-sm font-bold text-foreground bg-muted border-none px-3 py-1 rounded-full tabular-nums">
                 {properties.length}
               </span>
             </h1>
-            <p className="text-sm text-muted-foreground max-w-xl">
+            <p className="text-sm text-ink-muted max-w-xl">
               Gestiona tu portafolio de inmuebles. Añade, edita y supervisa cada propiedad desde un solo lugar.
             </p>
           </div>
           <button
             onClick={handleOpenCreateModal}
-            className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-[0.97] cursor-pointer"
+            className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4.5 h-4.5 transition-transform group-hover:rotate-90" />
             <span>Nueva Propiedad</span>
@@ -277,55 +275,76 @@ export default function PropertiesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-3">
+      <div className="bg-card border-none rounded-2xl p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-col xl:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por título, dirección o ciudad..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-muted border border-border text-foreground text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-muted-foreground/60"
+              className="w-full bg-background border-none text-foreground text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-ink-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
             />
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
-              <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="bg-muted text-foreground text-xs font-semibold rounded-xl border border-border pl-9 pr-8 py-2.5 outline-none appearance-none cursor-pointer hover:border-primary/30 transition-colors"
-              >
-                <option value="all">Todos los tipos</option>
-                <option value="casa">Casa</option>
-                <option value="apartamento">Apartamento</option>
-                <option value="local">Local Comercial</option>
-                <option value="oficina">Oficina</option>
-                <option value="terreno">Terreno</option>
-              </select>
+          <div className="flex flex-col md:flex-row gap-3 overflow-hidden">
+            {/* Filter Type Segmented Control */}
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1 md:pb-0">
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'casa', label: 'Casa' },
+                { id: 'apartamento', label: 'Apto' },
+                { id: 'local', label: 'Local' },
+                { id: 'oficina', label: 'Oficina' },
+                { id: 'terreno', label: 'Terreno' }
+              ].map(ft => (
+                <button
+                  key={ft.id}
+                  onClick={() => setFilterType(ft.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                    filterType === ft.id
+                      ? 'bg-foreground text-background shadow-btn'
+                      : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {ft.label}
+                </button>
+              ))}
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-muted text-foreground text-xs font-semibold rounded-xl border border-border px-3 py-2.5 outline-none appearance-none cursor-pointer hover:border-primary/30 transition-colors"
-            >
-              <option value="all">Todos</option>
-              <option value="disponible">Disponible</option>
-              <option value="ocupado">Alquilada</option>
-              <option value="mantenimiento">Mantenimiento</option>
-              <option value="inactivo">Inactiva</option>
-            </select>
-            <div className="flex bg-muted rounded-xl border border-border overflow-hidden">
+            
+            {/* Filter Status Segmented Control */}
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1 md:pb-0">
+              {[
+                { id: 'all', label: 'Estados' },
+                { id: 'disponible', label: 'Disponible' },
+                { id: 'ocupado', label: 'Alquilada' },
+                { id: 'mantenimiento', label: 'Mantenimiento' },
+                { id: 'inactivo', label: 'Inactiva' }
+              ].map(fs => (
+                <button
+                  key={fs.id}
+                  onClick={() => setFilterStatus(fs.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                    filterStatus === fs.id
+                      ? 'bg-primary text-primary-foreground shadow-btn'
+                      : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {fs.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex bg-background rounded-xl border-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-ink-muted hover:text-foreground'}`}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-ink-muted hover:text-foreground'}`}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -389,7 +408,7 @@ export default function PropertiesPage() {
               <div
                 key={prop.id}
                 onClick={() => router.push(`/properties/${prop.id}`)}
-                className={`group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col relative cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                className={`group bg-card border-none rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col relative cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transitionDelay: `${index * 60}ms` }}
               >
                 {/* Image */}
@@ -404,7 +423,7 @@ export default function PropertiesPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     </>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40 gap-2 bg-gradient-to-br from-primary/5 to-muted">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-ink-muted/40 gap-2 bg-muted/50 border-none">
                       <Camera className="w-10 h-10" />
                       <span className="text-[9px] uppercase font-bold tracking-widest">Sin foto</span>
                     </div>
@@ -414,14 +433,14 @@ export default function PropertiesPage() {
                   <div className="absolute top-3 left-3 flex gap-1.5">
                     {statusBadge(prop.status)}
                   </div>
-                  <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md border border-white/10 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1">
+                  <div className="absolute top-3 right-3 bg-black/60 border-none text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                     <Icon className="w-3 h-3" />
                     {typeLabel(prop.type)}
                   </div>
 
                   {/* Image count */}
                   {prop.image_urls && prop.image_urls.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 border-none shadow-sm">
                       <ImageIcon className="w-3 h-3" />
                       {prop.image_urls.length}
                     </div>
@@ -435,13 +454,13 @@ export default function PropertiesPage() {
                       {prop.title}
                     </h3>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg font-black text-primary">
+                      <span className="text-lg font-black text-primary tabular-nums">
                         ${prop.monthly_rent?.toLocaleString('es-CO')}
                       </span>
-                      <span className="text-[10px] font-semibold text-muted-foreground">/mes</span>
+                      <span className="text-[10px] font-semibold text-ink-muted">/mes</span>
                     </div>
-                    <p className="text-xs text-muted-foreground flex items-start gap-1.5 pt-0.5">
-                      <MapPin className="w-3.5 h-3.5 mt-0.5 text-primary/70 shrink-0" />
+                    <p className="text-xs text-ink-muted flex items-start gap-1.5 pt-0.5">
+                      <MapPin className="w-3.5 h-3.5 mt-0.5 text-primary shrink-0" />
                       <span className="line-clamp-1">{prop.address}{prop.city ? `, ${prop.city}` : ''}</span>
                     </p>
                   </div>
@@ -482,17 +501,17 @@ export default function PropertiesPage() {
         /* List View */
         <div className="space-y-3">
           {filteredProperties.map((prop, index) => (
-            <div
+              <div
               key={prop.id}
               onClick={() => router.push(`/properties/${prop.id}`)}
-              className={`group bg-card border border-border rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 flex items-center gap-4 cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              className={`group bg-card border-none rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-all duration-300 flex items-center gap-4 cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               style={{ transitionDelay: `${index * 50}ms` }}
             >
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-muted">
                 {prop.image_urls?.[0] ? (
                   <img src={prop.image_urls[0]} alt={prop.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                  <div className="w-full h-full flex items-center justify-center text-ink-muted/30 border-none bg-muted/50">
                     <Camera className="w-6 h-6" />
                   </div>
                 )}
@@ -502,18 +521,18 @@ export default function PropertiesPage() {
                   <h3 className="font-extrabold text-sm text-foreground truncate group-hover:text-primary transition-colors">{prop.title}</h3>
                   {statusBadge(prop.status)}
                 </div>
-                <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                  <MapPin className="w-3 h-3 shrink-0 text-primary/70" />
+                <p className="text-xs text-ink-muted truncate flex items-center gap-1">
+                  <MapPin className="w-3 h-3 shrink-0 text-primary" />
                   {prop.address}{prop.city ? `, ${prop.city}` : ''}
                 </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-muted-foreground">
+                <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-ink-muted tabular-nums">
                   <span className="text-primary font-black text-sm">${prop.monthly_rent?.toLocaleString('es-CO')}/mes</span>
                   <span className="flex items-center gap-1"><BedDouble className="w-3 h-3" />{prop.bedrooms || 0}</span>
                   <span className="flex items-center gap-1"><Bath className="w-3 h-3" />{prop.bathrooms || 0}</span>
                   <span className="flex items-center gap-1"><Maximize2 className="w-3 h-3" />{prop.area_sqm || 0}m²</span>
                 </div>
               </div>
-              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+              <ArrowRight className="w-5 h-5 text-ink-muted group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           ))}
         </div>
@@ -523,8 +542,8 @@ export default function PropertiesPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div onClick={() => setIsModalOpen(false)} className="absolute inset-0" />
-          <div className="relative bg-card border border-border rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-up my-8">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50" />
+          <div className="relative bg-card border-none rounded-3xl w-full max-w-2xl shadow-modal overflow-hidden animate-scale-up my-8">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
 
             <div className="p-6 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -787,13 +806,13 @@ export default function PropertiesPage() {
 function statusBadge(s: Property['status']) {
   switch (s) {
     case 'disponible':
-      return <span className="inline-flex items-center gap-1 bg-success/20 border border-success/30 text-success text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm"><CheckCircle2 className="w-3 h-3" /> Disponible</span>;
+      return <span className="inline-flex items-center gap-1 bg-success/10 border-none text-success text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><CheckCircle2 className="w-3 h-3" /> Disponible</span>;
     case 'ocupado':
-      return <span className="inline-flex items-center gap-1 bg-primary/20 border border-primary/30 text-primary text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm"><Building2 className="w-3 h-3" /> Alquilada</span>;
+      return <span className="inline-flex items-center gap-1 bg-primary/10 border-none text-primary text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Building2 className="w-3 h-3" /> Alquilada</span>;
     case 'mantenimiento':
-      return <span className="inline-flex items-center gap-1 bg-warning/20 border border-warning/30 text-warning text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm"><Wrench className="w-3 h-3" /> Mantenimiento</span>;
+      return <span className="inline-flex items-center gap-1 bg-warning/10 border-none text-warning text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Wrench className="w-3 h-3" /> Mantenimiento</span>;
     case 'inactivo':
-      return <span className="inline-flex items-center gap-1 bg-destructive/20 border border-destructive/30 text-destructive text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md shadow-sm"><EyeOff className="w-3 h-3" /> Inactivo</span>;
+      return <span className="inline-flex items-center gap-1 bg-destructive/10 border-none text-destructive text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><EyeOff className="w-3 h-3" /> Inactivo</span>;
     default:
       return null;
   }

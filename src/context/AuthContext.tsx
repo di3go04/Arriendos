@@ -45,18 +45,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Check active session on mount
+    let mounted = true;
+
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+        console.log('[Auth] Starting session check...');
+        
+        // Race against a timeout to prevent infinite hangs
+        const sessionResult = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Session check timed out')), 5000)
+          )
+        ]);
+
+        console.log('[Auth] Session result:', sessionResult.data?.session ? 'Has session' : 'No session');
+        
+        if (mounted && sessionResult.data?.session?.user) {
+          setUser(sessionResult.data.session.user);
+          try {
+            await fetchProfile(sessionResult.data.session.user.id);
+          } catch (e) {
+            console.error('[Auth] Profile fetch failed:', e);
+          }
         }
       } catch (error) {
-        console.error('Error checking initial session:', error);
+        console.error('[Auth] Session check error:', error);
       } finally {
-        setLoading(false);
+        console.log('[Auth] Setting loading to false');
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -64,20 +83,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setLoading(true);
+      async (_event, session) => {
+        if (!mounted) return;
+        console.log('[Auth] Auth state changed:', _event);
         if (session?.user) {
           setUser(session.user);
-          await fetchProfile(session.user.id);
+          try {
+            await fetchProfile(session.user.id);
+          } catch (e) {
+            console.error('[Auth] Profile fetch in listener failed:', e);
+          }
         } else {
           setUser(null);
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

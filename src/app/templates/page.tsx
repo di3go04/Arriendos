@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ContractTemplate } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 import {
   FileCode,
   Plus,
@@ -90,6 +91,7 @@ const DEFAULT_TEMPLATE_CONTENT = `
 
 export default function TemplatesPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [templates, setTemplates] = useState<ContractTemplate[]>([]);
@@ -108,6 +110,130 @@ export default function TemplatesPage() {
   // Preview States
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+
+  // AI Template Generator States
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiResultContent, setAiResultContent] = useState('');
+  const [aiResultTitle, setAiResultTitle] = useState('');
+  const [isAiPublic, setIsAiPublic] = useState(false);
+  const [aiEditMode, setAiEditMode] = useState<'visual' | 'code'>('visual');
+  const [aiError, setAiError] = useState('');
+
+  const handleOpenAiCreator = () => {
+    setAiPrompt('');
+    setAiResultContent('');
+    setAiResultTitle('');
+    setAiError('');
+    setIsAiPublic(false);
+    setAiEditMode('visual');
+    setIsAiOpen(true);
+  };
+
+  const handleGenerateAiTemplate = async () => {
+    if (!aiPrompt.trim()) {
+      setAiError('Por favor describe lo que necesitas redactar.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setAiError('');
+    setAiResultContent('');
+
+    try {
+      const res = await fetch('/api/generate-template', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Fallo en el servicio de generación de la IA.');
+      }
+
+      const data = await res.json();
+      setAiResultContent(data.templateContent || '');
+      setAiResultTitle(data.titleSuggested || 'Plantilla de Arrendamiento Generada por IA');
+    } catch (err: any) {
+      console.error('Error generating template with IA:', err);
+      setAiError(err.message || 'Error al generar la plantilla. Por favor intenta de nuevo.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveAiTemplate = async () => {
+    if (!aiResultTitle.trim()) {
+      setAiError('El nombre de la plantilla es obligatorio.');
+      return;
+    }
+    if (!aiResultContent.trim()) {
+      setAiError('El contenido de la plantilla no puede estar vacío.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAiError('');
+
+    try {
+      const regex = /\{\{([^}]+)\}\}/g;
+      const detectedVariables: string[] = [];
+      let match;
+      while ((match = regex.exec(aiResultContent)) !== null) {
+        if (!detectedVariables.includes(match[1])) {
+          detectedVariables.push(match[1]);
+        }
+      }
+
+      const payload = {
+        name: aiResultTitle,
+        content: aiResultContent,
+        variables: detectedVariables,
+        is_public: isAiPublic,
+        owner_id: user?.id
+      };
+
+      const { error } = await supabase
+        .from('contract_templates')
+        .insert(payload);
+      
+      if (error) throw error;
+
+      confetti({ particleCount: 60, spread: 50 });
+      toast({ type: 'success', message: '¡Plantilla generada con IA guardada exitosamente!' });
+      setIsAiOpen(false);
+      fetchTemplates();
+    } catch (err: any) {
+      console.error('Error saving AI template:', err);
+      setAiError(err.message || 'Error al guardar la plantilla.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const insertVariableIntoAiTemplate = (variableKey: string) => {
+    const placeholder = `{{${variableKey}}}`;
+    if (aiEditMode === 'visual') {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(placeholder));
+        const el = document.getElementById('ai-visual-editor');
+        if (el) {
+          setAiResultContent(el.innerHTML);
+        }
+      } else {
+        setAiResultContent(prev => prev + ` ${placeholder}`);
+      }
+    } else {
+      setAiResultContent(prev => prev + placeholder);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -147,7 +273,7 @@ export default function TemplatesPage() {
   const handleOpenEditor = (template: ContractTemplate) => {
     // Non-owners can duplicate public templates, but not modify them directly
     if (template.owner_id !== user?.id) {
-      alert('Esta plantilla es pública. Para modificarla, por favor utiliza la acción "Duplicar" para crear una copia personal editable.');
+      toast({ type: 'warning', message: 'Esta plantilla es pública. Duplica para crear una copia editable.' });
       return;
     }
     setEditingTemplate(template);
@@ -273,17 +399,16 @@ export default function TemplatesPage() {
       if (error) throw error;
 
       confetti({ particleCount: 40, spread: 40 });
-      alert('Plantilla duplicada y añadida con éxito.');
-      fetchTemplates();
+      toast({ type: 'success', message: 'Plantilla duplicada exitosamente.' });
     } catch (err) {
       console.error('Error duplicating template:', err);
-      alert('Error al duplicar la plantilla.');
+      toast({ type: 'error', message: 'Error al duplicar la plantilla.' });
     }
   };
 
   const handleDelete = async (template: ContractTemplate) => {
     if (template.owner_id !== user?.id) {
-      alert('No estás autorizado para eliminar plantillas públicas de otros arrendadores.');
+      toast({ type: 'error', message: 'No autorizado para eliminar plantillas públicas de otros arrendadores.' });
       return;
     }
 
@@ -298,11 +423,10 @@ export default function TemplatesPage() {
 
       if (error) throw error;
 
-      alert('Plantilla eliminada con éxito.');
-      fetchTemplates();
+      toast({ type: 'success', message: 'Plantilla eliminada.' });
     } catch (err) {
       console.error('Error deleting template:', err);
-      alert('Error al eliminar la plantilla de la base de datos.');
+      toast({ type: 'error', message: 'Error al eliminar la plantilla.' });
     }
   };
 
@@ -327,13 +451,23 @@ export default function TemplatesPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreator}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-bold rounded-2xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer active:scale-98 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nueva Plantilla</span>
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2.5 shrink-0">
+          <button
+            onClick={handleOpenAiCreator}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-card border border-border hover:bg-muted text-foreground text-xs font-bold rounded-2xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-98"
+          >
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            <span>Crear plantilla con IA</span>
+          </button>
+
+          <button
+            onClick={handleOpenCreator}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-bold rounded-2xl transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 cursor-pointer active:scale-98"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nueva Plantilla</span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -664,6 +798,354 @@ export default function TemplatesPage() {
                   </span>
                   <p className="text-[10px] text-muted-foreground leading-normal font-medium">
                     Puedes estructurar tu contrato usando etiquetas estándar como <code className="text-primary font-mono">&lt;p&gt;</code>, <code className="text-primary font-mono">&lt;h3&gt;</code>, <code className="text-primary font-mono">&lt;strong&gt;</code> y estilos en línea (<code className="text-primary font-mono">style="..."</code>) para lograr un diseño totalmente profesional.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* AI Template Generator Modal */}
+      {isAiOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-6xl shadow-2xl overflow-hidden animate-scale-up my-4">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-border flex items-center justify-between bg-muted/20">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </span>
+                <div>
+                  <h3 className="font-black text-base md:text-lg text-foreground flex items-center gap-2">
+                    Crear Plantilla con Inteligencia Artificial
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Redacta contratos profesionales en segundos usando lenguaje natural y placeholders dinámicos.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAiOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {aiError && (
+              <div className="m-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
+                <Info className="w-4 h-4 shrink-0" />
+                <span>{aiError}</span>
+              </div>
+            )}
+
+            {/* Split Creator Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border">
+              
+              {/* Left Column: AI Prompt & Text Editor */}
+              <div className="lg:col-span-8 p-6 space-y-5 max-h-[72vh] overflow-y-auto">
+                
+                {/* Prompt Section */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-primary uppercase tracking-widest">
+                    ✏️ Describe lo que necesitas en tu contrato
+                  </label>
+                  <textarea
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="Ej: Quiero un contrato de arrendamiento para una casa en Bogotá, con cláusula de mascotas, pago el día 10 de cada mes y depósito en garantía de 1 millón..."
+                    rows={4}
+                    disabled={isGenerating}
+                    className="w-full bg-muted border border-border text-foreground text-xs rounded-xl focus:ring-1 focus:ring-primary focus:border-primary p-4 outline-none resize-none"
+                  />
+                  
+                  {/* Suggestion tags */}
+                  {!aiResultContent && !isGenerating && (
+                    <div className="space-y-1.5">
+                      <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Sugerencias de Redacción:
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          'Contrato residencial en Bogotá con cláusula de mascotas y pago el día 10.',
+                          'Contrato comercial de local en Medellín con 2 meses de depósito en garantía.',
+                          'Arrendamiento de apartaestudio amoblado con servicios incluidos y prohibición de subarriendo.',
+                        ].map((sug) => (
+                          <button
+                            key={sug}
+                            type="button"
+                            onClick={() => setAiPrompt(sug)}
+                            className="text-[10px] bg-muted/50 hover:bg-primary/5 border border-border hover:border-primary/20 text-muted-foreground hover:text-primary px-3 py-1.5 rounded-lg transition-all text-left cursor-pointer font-medium"
+                          >
+                            {sug}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-[10px] text-muted-foreground font-semibold">
+                      Usa lenguaje natural. La IA estructurará el HTML y las variables.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiTemplate}
+                      disabled={isGenerating || !aiPrompt.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-bold shadow-md shadow-primary/10 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Redactando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Generar Plantilla</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Shimmer Skeleton Loader */}
+                {isGenerating && (
+                  <div className="space-y-4 border border-border p-6 rounded-2xl bg-card animate-pulse">
+                    <div className="h-6 bg-muted rounded-md w-2/3 mx-auto mb-6"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded-md w-full"></div>
+                      <div className="h-3 bg-muted rounded-md w-11/12"></div>
+                      <div className="h-3 bg-muted rounded-md w-full"></div>
+                    </div>
+                    <div className="h-4 bg-muted rounded-md w-1/4 mt-6 mb-2"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded-md w-full"></div>
+                      <div className="h-3 bg-muted rounded-md w-5/6"></div>
+                    </div>
+                    <p className="text-[10px] text-center text-primary font-bold animate-pulse pt-4">
+                      La Inteligencia Artificial de RentNow está redactando tu plantilla en formato HTML premium...
+                    </p>
+                  </div>
+                )}
+
+                {/* Generation Output & Editors */}
+                {aiResultContent && !isGenerating && (
+                  <div className="space-y-4 border-t border-border pt-4 animate-fade-in">
+                    
+                    {/* Suggested Title and Visibility toggle */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-muted/20 p-4 rounded-2xl border border-border">
+                      <div className="md:col-span-7">
+                        <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                          Nombre Sugerido de la Plantilla *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={aiResultTitle}
+                          onChange={(e) => setAiResultTitle(e.target.value)}
+                          className="w-full bg-card border border-border text-foreground text-xs rounded-xl focus:ring-1 focus:ring-primary focus:border-primary p-3 outline-none"
+                        />
+                      </div>
+
+                      <div className="md:col-span-5 flex items-center justify-between bg-card border border-border p-3 rounded-xl h-[46px]">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-primary shrink-0" />
+                          <div>
+                            <span className="block text-[10px] font-extrabold text-foreground leading-none">Plantilla Pública</span>
+                            <span className="block text-[8px] text-muted-foreground font-semibold mt-0.5">Visible en la red</span>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isAiPublic}
+                            onChange={(e) => setIsAiPublic(e.target.checked)}
+                            className="sr-only peer cursor-pointer"
+                          />
+                          <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:height-4 after:w-4 after:transition-all peer-checked:bg-primary border border-border"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Rich text Editor panel */}
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border pb-2">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-primary">
+                          📄 Edición del Contrato Generado
+                        </label>
+
+                        {/* Format buttons toolbar */}
+                        {aiEditMode === 'visual' && (
+                          <div className="flex items-center flex-wrap gap-1 bg-muted p-1 rounded-lg border border-border">
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('bold')}
+                              className="px-2 py-1 bg-card hover:bg-muted text-[10px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                              title="Negrita"
+                            >
+                              <strong>N</strong>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('italic')}
+                              className="px-2 py-1 bg-card hover:bg-muted text-[10px] italic text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                              title="Cursiva"
+                            >
+                              <em>K</em>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('formatBlock', false, '<h2>')}
+                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              Título H2
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('formatBlock', false, '<h3>')}
+                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              Título H3
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('formatBlock', false, '<p>')}
+                              className="px-2 py-1 bg-card hover:bg-muted text-[9px] font-bold text-foreground rounded border border-border shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              Párrafo
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setAiEditMode('visual')}
+                            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                              aiEditMode === 'visual'
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border'
+                            }`}
+                          >
+                            ✏️ Diseño Visual
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAiEditMode('code')}
+                            className={`px-3 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                              aiEditMode === 'code'
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-border'
+                            }`}
+                          >
+                            💻 Código HTML
+                          </button>
+                        </div>
+                      </div>
+
+                      {aiEditMode === 'visual' ? (
+                        <div className="relative">
+                          <div
+                            id="ai-visual-editor"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => setAiResultContent(e.currentTarget.innerHTML)}
+                            dangerouslySetInnerHTML={{ __html: aiResultContent }}
+                            className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 relative">
+                          <textarea
+                            required
+                            value={aiResultContent}
+                            onChange={(e) => setAiResultContent(e.target.value)}
+                            placeholder="Código HTML generado por la IA..."
+                            rows={14}
+                            className="w-full bg-[#0d131f] border border-border text-[#cbd5e1] font-mono text-[11px] leading-relaxed rounded-xl focus:ring-1 focus:ring-primary p-4 outline-none resize-y h-[350px]"
+                          />
+                          <div className="absolute right-4 bottom-4 bg-[#1e293b]/80 border border-slate-700 backdrop-blur-sm text-[9px] font-bold text-slate-400 px-2 py-1 rounded-md">
+                            Caracteres: {aiResultContent.length}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => setIsAiOpen(false)}
+                        className="px-4 py-2.5 rounded-lg border border-border hover:bg-muted text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveAiTemplate}
+                        disabled={isSubmitting}
+                        className="px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-bold shadow-md shadow-primary/10 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Guardando...</span>
+                          </>
+                        ) : (
+                          <span>Guardar y Publicar Plantilla</span>
+                        )}
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* Right Column: Dynamic Variables Side-panel */}
+              <div className="lg:col-span-4 p-6 space-y-4 max-h-[72vh] overflow-y-auto bg-muted/10">
+                <div>
+                  <h4 className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
+                    <Info className="w-4 h-4 text-primary" />
+                    Inyección de Variables
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground leading-normal mt-1">
+                    Haz clic en cualquiera de las variables para insertarla en la posición exacta de tu cursor dentro del editor.
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  {SYSTEM_VARIABLES.map((v) => (
+                    <button
+                      key={v.key}
+                      type="button"
+                      onClick={() => insertVariableIntoAiTemplate(v.key)}
+                      className="w-full text-left bg-card hover:bg-primary/5 border border-border hover:border-primary/20 p-2.5 rounded-xl transition-all cursor-pointer hover:shadow-sm active:scale-99 group flex items-start justify-between"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="block text-[11px] font-mono font-bold text-primary group-hover:text-primary-foreground">
+                          {`{{${v.key}}}`}
+                        </span>
+                        <span className="block text-[9px] text-muted-foreground leading-normal">
+                          {v.desc}
+                        </span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 self-center group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+
+                <div className="bg-primary/5 border border-primary/10 p-3.5 rounded-2xl space-y-2 mt-4">
+                  <span className="block text-[9px] font-black text-primary uppercase tracking-wider flex items-center gap-1">
+                    💡 Editor Enriquecido Visual
+                  </span>
+                  <p className="text-[10px] text-muted-foreground leading-normal font-medium">
+                    Puedes sombrear cualquier sección de texto generada en el modo <strong>Diseño Visual</strong> y utilizar los controles de arriba para aplicar negrita, cursiva o encabezados. ¡La estructura HTML se actualizará automáticamente bajo el capó!
                   </p>
                 </div>
               </div>

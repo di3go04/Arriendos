@@ -89,7 +89,7 @@ export default function TenantsPage() {
             Directorio de Usuarios
           </p>
           <h2 className="text-xl md:text-2xl font-black text-foreground">
-            Inquilinos Registrados en Arrendo ({tenants.length})
+            Inquilinos Registrados en RentNow ({tenants.length})
           </h2>
         </div>
       </div>

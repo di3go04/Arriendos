@@ -53,6 +53,7 @@ export interface Contract {
   monthly_rent: number;
   deposit: number;
   payment_day: number;
+  notes: string | null;
   contract_content: string | null; // Compilated final HTML
   pdf_url: string | null;
   signed_by_landlord: boolean;

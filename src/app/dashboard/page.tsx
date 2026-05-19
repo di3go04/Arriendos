@@ -81,43 +81,48 @@ export default function DashboardPage() {
         setProperties(propsData || []);
 
         // 2. Fetch payments with contract details
-        let query = supabase
-          .from('payments')
-          .select(`
-            *,
-            contract:contracts (
-              id,
-              contract_number,
-              monthly_rent,
-              property:properties (id, title),
-              landlord:profiles!contracts_landlord_id_fkey (id, full_name),
-              tenant:profiles!contracts_tenant_id_fkey (id, full_name)
-            )
-          `);
+        // Use two-step approach to avoid Supabase nested join alias issues (profiles_2)
+        let payments: any[] = [];
 
         if (profile.role === 'arrendatario') {
-          query = query.eq('tenant_id', user.id);
+          const { data: pays, error: paysErr } = await supabase
+            .from('payments').select(`*`).eq('tenant_id', user.id).order('due_date', { ascending: false });
+          if (paysErr) throw paysErr;
+
+          const rawPays: any[] = pays || [];
+          const contractIds = [...new Set(rawPays.map(p => p.contract_id))];
+          if (contractIds.length > 0) {
+            const { data: contracts } = await supabase
+              .from('contracts').select('id, contract_number, monthly_rent, property:properties(id, title), landlord:profiles!contracts_landlord_id_fkey(id, full_name), tenant:profiles!contracts_tenant_id_fkey(id, full_name)')
+              .in('id', contractIds);
+            payments = rawPays.map(p => ({
+              ...p,
+              contract: (contracts || []).find(c => c.id === p.contract_id) || null
+            })).filter(p => p.contract);
+          }
         } else {
-          query = query.eq('contract.landlord_id', user.id);
+          const { data: contracts } = await supabase
+            .from('contracts').select('id, contract_number, monthly_rent, property:properties(id, title), landlord:profiles!contracts_landlord_id_fkey(id, full_name), tenant:profiles!contracts_tenant_id_fkey(id, full_name)')
+            .eq('landlord_id', user.id);
+          const contractIds = (contracts || []).map(c => c.id);
+
+          if (contractIds.length > 0) {
+            const { data: pays, error: paysErr } = await supabase
+              .from('payments').select(`*`).in('contract_id', contractIds).order('due_date', { ascending: false });
+            if (paysErr) throw paysErr;
+            payments = ((pays as any[]) || []).map(p => ({
+              ...p,
+              contract: (contracts || []).find(c => c.id === p.contract_id) || null
+            })).filter(p => p.contract);
+          }
         }
-
-        const { data: paymentsData, error: paymentsErr } = await query;
-        if (paymentsErr) throw paymentsErr;
-
-        let payments: Payment[] = (paymentsData as any[]) || [];
-        payments = payments.filter(p => p.contract !== null);
 
         if (selectedPropertyId !== 'all') {
           payments = payments.filter(p => p.contract?.property?.id === selectedPropertyId);
         }
         
-        // 3. Process metrics and KPIs
         calculateMetrics(payments);
-        
-        // 4. Process Chart Data
         processChartData(payments);
-
-        // 5. Categorize payments into alerts
         categorizePayments(payments);
 
       } catch (err) {
@@ -130,7 +135,7 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [user, profile, selectedPropertyId, selectedPeriod]);
 
-  const calculateMetrics = (payments: Payment[]) => {
+  const calculateMetrics = (payments: any[]) => {
     const today = new Date();
     
     // Filter payments based on period
@@ -177,7 +182,7 @@ export default function DashboardPage() {
     });
   };
 
-  const processChartData = (payments: Payment[]) => {
+  const processChartData = (payments: any[]) => {
     const monthlyGroups: { [month: string]: { [propName: string]: number } } = {};
     const propertyNames = new Set<string>();
 
@@ -217,7 +222,7 @@ export default function DashboardPage() {
     setChartData(data);
   };
 
-  const categorizePayments = (payments: Payment[]) => {
+  const categorizePayments = (payments: any[]) => {
     const today = new Date();
     
     const upcoming = payments
@@ -241,36 +246,41 @@ export default function DashboardPage() {
   };
 
   // CSV Report Generator
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (stats.paymentsCount === 0 || !user || !profile) return;
     
     const headers = ['Inmueble', 'Inquilino', 'Fecha de Vencimiento', 'Fecha de Pago', 'Monto', 'Estado', 'Notas'];
     
-    // We fetch all payments to generate a detailed report
-    let query = supabase
-      .from('payments')
-      .select(`
-        amount,
-        due_date,
-        paid_at,
-        paid,
-        notes,
-        contract:contracts (
-          property:properties (title),
-          tenant:profiles!contracts_tenant_id_fkey (full_name)
-        )
-      `);
+    try {
+      let payments: any[] = [];
 
-    if (profile.role === 'arrendatario') {
-      query = query.eq('tenant_id', user.id);
-    } else {
-      query = query.eq('contract.landlord_id', user.id);
-    }
+      if (profile.role === 'arrendatario') {
+        const { data } = await supabase
+          .from('payments')
+          .select(`amount, due_date, paid_at, paid, notes, contract_id`)
+          .eq('tenant_id', user.id);
+        if (!data) return;
+        const contractIds = [...new Set(data.map(p => p.contract_id))];
+        const { data: contracts } = contractIds.length > 0 
+          ? await supabase.from('contracts').select(`id, property:properties(title), tenant:profiles!contracts_tenant_id_fkey(full_name)`).in('id', contractIds)
+          : { data: [] };
+        payments = data.map(p => ({ ...p, contract: (contracts || []).find(c => c.id === p.contract_id) || null }));
+      } else {
+        const { data: contracts } = await supabase
+          .from('contracts')
+          .select(`id, property:properties(title), tenant:profiles!contracts_tenant_id_fkey(full_name)`)
+          .eq('landlord_id', user.id);
+        const contractIds = (contracts || []).map(c => c.id);
+        if (contractIds.length === 0) return;
+        const { data } = await supabase
+          .from('payments')
+          .select(`amount, due_date, paid_at, paid, notes, contract_id`)
+          .in('contract_id', contractIds);
+        if (!data) return;
+        payments = data.map(p => ({ ...p, contract: (contracts || []).find(c => c.id === p.contract_id) || null }));
+      }
 
-    query.then(({ data }) => {
-      if (!data) return;
-
-      const sanitized = (data as any[]).filter(p => p.contract !== null);
+      const sanitized = payments.filter(p => p.contract !== null);
 
       const rows = sanitized.map((p: any) => [
         p.contract?.property?.title || 'N/A',
@@ -291,11 +301,13 @@ export default function DashboardPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `Arrendo_Reporte_Financiero_${format(new Date(), 'dd-MM-yyyy')}.csv`);
+      link.setAttribute('download', `RentNow_Reporte_Financiero_${format(new Date(), 'dd-MM-yyyy')}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
+    } catch (err) {
+      console.error('Error exporting CSV:', err);
+    }
   };
 
   const currencySymbol = profile?.preferred_currency || 'USD';
@@ -327,7 +339,7 @@ export default function DashboardPage() {
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            ¡Te damos la bienvenida a Arrendo!
+            ¡Te damos la bienvenida a RentNow!
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
             Comienza a digitalizar la administración de tus alquileres. Para empezar a visualizar indicadores financieros, gráficos de ingresos e informes, debes registrar tu primera propiedad.
@@ -361,7 +373,7 @@ export default function DashboardPage() {
 
         <Link
           href="/dashboard/properties"
-          className="inline-flex items-center gap-2 px-6 py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/15 transition-all text-sm group"
+          className="inline-flex items-center gap-2 px-6 py-3.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all text-sm group"
         >
           <Plus className="w-4 h-4" />
           <span>Registrar mi Primer Inmueble</span>
@@ -375,40 +387,65 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in">
       
       {/* Top filters and report exporter panel */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-card border border-border p-4 rounded-2xl">
-        <div className="flex flex-wrap items-center gap-3.5 w-full sm:w-auto">
-          {/* Property selector */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <select
-              value={selectedPropertyId}
-              onChange={(e) => setSelectedPropertyId(e.target.value)}
-              className="bg-muted text-foreground text-xs font-semibold rounded-lg border border-border p-2 outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="all">Todas las Propiedades</option>
+      <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between bg-card border-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] p-4 rounded-2xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full xl:w-auto">
+          {/* Property Segmented Control */}
+          <div className="flex items-center gap-2 w-full md:w-auto overflow-hidden">
+            <Filter className="w-4 h-4 text-ink-muted shrink-0 hidden sm:block" />
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 w-full pb-1 md:pb-0">
+              <button
+                onClick={() => setSelectedPropertyId('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                  selectedPropertyId === 'all'
+                    ? 'bg-foreground text-background shadow-btn'
+                    : 'bg-muted/50 text-ink-muted hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                Todas las Propiedades
+              </button>
               {properties.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPropertyId(p.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                    selectedPropertyId === p.id
+                      ? 'bg-foreground text-background shadow-btn'
+                      : 'bg-muted/50 text-ink-muted hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {p.title}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
-          {/* Period selector */}
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="bg-muted text-foreground text-xs font-semibold rounded-lg border border-border p-2 outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="current-month">Este Mes</option>
-            <option value="last-30">Últimos 30 Días</option>
-            <option value="all-time">Todo el Historial</option>
-          </select>
+          {/* Period Segmented Control */}
+          <div className="flex overflow-x-auto hide-scrollbar gap-2 w-full md:w-auto pb-1 md:pb-0">
+            {[
+              { id: 'current-month', label: 'Este Mes' },
+              { id: 'last-30', label: 'Últimos 30 Días' },
+              { id: 'all-time', label: 'Historial' }
+            ].map(period => (
+              <button
+                key={period.id}
+                onClick={() => setSelectedPeriod(period.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                  selectedPeriod === period.id
+                    ? 'bg-primary text-primary-foreground shadow-btn'
+                    : 'bg-muted/50 text-ink-muted hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* CSV Exporter */}
         <button
           onClick={handleExportCSV}
           disabled={stats.paymentsCount === 0}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-secondary/80 hover:bg-secondary text-secondary-foreground font-semibold rounded-xl text-xs transition-all border border-border disabled:opacity-50 cursor-pointer"
+          className="w-full xl:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-foreground hover:bg-foreground/90 text-background font-bold rounded-xl text-xs transition-all border-none shadow-btn disabled:opacity-50 cursor-pointer shrink-0"
         >
           <Download className="w-4 h-4" />
           <span>Exportar a CSV</span>
@@ -419,14 +456,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* KPI 1: Monthly earnings */}
-        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm relative overflow-hidden group">
-          <div className="absolute right-3 top-3 p-3 bg-success/10 border border-success/20 rounded-xl text-success group-hover:scale-105 transition-transform">
+        <div className="bg-card border-none p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute right-3 top-3 p-3 bg-success/10 border-none rounded-xl text-success group-hover:scale-110 transition-transform">
             <TrendingUp className="w-6 h-6" />
           </div>
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider block">
             Ingresos Recibidos
           </span>
-          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2">
+          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2 tabular-nums">
             {currencySymbol} {stats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-success font-semibold flex items-center gap-1 mt-2.5">
@@ -435,14 +472,14 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI 2: Current pending bills */}
-        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm relative overflow-hidden group">
-          <div className="absolute right-3 top-3 p-3 bg-warning/10 border border-warning/20 rounded-xl text-warning group-hover:scale-105 transition-transform">
+        <div className="bg-card border-none p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute right-3 top-3 p-3 bg-warning/10 border-none rounded-xl text-warning group-hover:scale-110 transition-transform">
             <Clock className="w-6 h-6" />
           </div>
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider block">
             Por Cobrar (Pendiente)
           </span>
-          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2">
+          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2 tabular-nums">
             {currencySymbol} {stats.totalPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-warning font-semibold flex items-center gap-1 mt-2.5">
@@ -451,14 +488,14 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI 3: Total late/overdue payments */}
-        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm relative overflow-hidden group">
-          <div className="absolute right-3 top-3 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive group-hover:scale-105 transition-transform">
+        <div className="bg-card border-none p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute right-3 top-3 p-3 bg-destructive/10 border-none rounded-xl text-destructive group-hover:scale-110 transition-transform">
             <AlertOctagon className="w-6 h-6" />
           </div>
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider block">
             Saldo Vencido (Mora)
           </span>
-          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2">
+          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2 tabular-nums">
             {currencySymbol} {stats.totalOverdue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-destructive font-semibold flex items-center gap-1 mt-2.5">
@@ -467,17 +504,17 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI 4: Delinquency Rate */}
-        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm relative overflow-hidden group">
-          <div className="absolute right-3 top-3 p-3 bg-primary/10 border border-primary/20 rounded-xl text-primary group-hover:scale-105 transition-transform">
+        <div className="bg-card border-none p-6 rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 relative overflow-hidden group">
+          <div className="absolute right-3 top-3 p-3 bg-primary/10 border-none rounded-xl text-primary group-hover:scale-110 transition-transform">
             <DollarSign className="w-6 h-6" />
           </div>
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+          <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider block">
             Tasa de Morosidad
           </span>
-          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2">
+          <span className="text-2xl md:text-3xl font-extrabold text-foreground block mt-2 tabular-nums">
             {stats.morosityRate.toFixed(1)}%
           </span>
-          <div className="mt-2.5 w-full bg-muted rounded-full h-1.5 overflow-hidden">
+          <div className="mt-2.5 w-full bg-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] rounded-full h-1.5 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 stats.morosityRate > 15 ? 'bg-destructive' : stats.morosityRate > 0 ? 'bg-warning' : 'bg-success'
@@ -493,13 +530,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Income Chart using Recharts */}
-        <div className="bg-card border border-border p-6 rounded-2xl shadow-sm lg:col-span-2">
+        <div className="bg-card border-none p-6 rounded-2xl shadow-card lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-base text-foreground">
                 Ingresos Mensuales por Inmueble
               </h3>
-              <p className="text-[11px] text-muted-foreground font-semibold">
+              <p className="text-[11px] text-ink-muted font-semibold">
                 Suma total de cobros conciliados (`Pagados`) agrupados por mes
               </p>
             </div>
@@ -507,13 +544,13 @@ export default function DashboardPage() {
           
           <div className="h-80 w-full text-xs">
             {chartData.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2 bg-muted/20 border border-dashed border-border rounded-xl">
+              <div className="h-full flex flex-col items-center justify-center text-ink-muted gap-2 bg-muted/30 border-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl">
                 <Briefcase className="w-8 h-8 opacity-40" />
-                <p className="text-xs font-semibold">Sin datos de facturación</p>
+                <p className="text-xs font-semibold text-foreground">Sin datos de facturación</p>
                 <p className="text-[10px] text-center max-w-[200px]">Los ingresos se graficarán una vez marques cobros como pagados.</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={250}>
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                   <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
@@ -545,13 +582,13 @@ export default function DashboardPage() {
         <div className="space-y-6">
           
           {/* Overdue/Late list */}
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+          <div className="bg-card border-none p-6 rounded-2xl shadow-card">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
               <AlertOctagon className="w-4 h-4 text-destructive" /> Alertas de Morosidad
             </h3>
 
             {overduePayments.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-1.5 border border-dashed border-border rounded-xl">
+              <div className="py-8 text-center text-ink-muted flex flex-col items-center justify-center gap-1.5 bg-muted/30 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl">
                 <Check className="w-6 h-6 text-success bg-success/10 p-1 rounded-full" />
                 <span className="text-xs font-semibold text-foreground">¡Todo en regla!</span>
                 <span className="text-[10px]">No tienes ningún cobro vencido.</span>
@@ -564,25 +601,25 @@ export default function DashboardPage() {
                   const propName = p.contract?.property?.title || 'Inmueble';
 
                   return (
-                    <div key={p.id} className="p-3 bg-destructive/5 border border-destructive/15 hover:border-destructive/30 rounded-xl flex items-start gap-2.5 transition-all text-xs">
+                    <div key={p.id} className="p-3 bg-destructive/5 border-none shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)] hover:shadow-[inset_0_0_0_1px_rgba(239,68,68,0.3)] rounded-xl flex items-start gap-2.5 transition-all text-xs">
                       <div className="p-1 rounded-lg bg-destructive/10 text-destructive mt-0.5 shrink-0">
                         <DollarSign className="w-3.5 h-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex justify-between items-center gap-2">
                           <span className="font-bold text-foreground truncate">{tenantName}</span>
-                          <span className="bg-destructive/10 text-destructive text-[9px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
+                          <span className="bg-destructive/10 text-destructive text-[9px] font-extrabold px-2 py-0.5 rounded border-none shrink-0">
                             Hace {daysLate} días
                           </span>
                         </div>
-                        <span className="block text-[10px] text-muted-foreground truncate mt-0.5">
+                        <span className="block text-[10px] text-ink-muted truncate mt-0.5">
                           {propName}
                         </span>
-                        <div className="flex items-center justify-between mt-2 pt-1 border-t border-destructive/10">
-                          <span className="text-primary font-bold">
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-destructive/10">
+                          <span className="text-destructive font-bold tabular-nums">
                             {currencySymbol} {Number(p.amount).toLocaleString()}
                           </span>
-                          <Link href="/dashboard/payments" className="text-[9px] font-bold text-primary hover:underline flex items-center gap-0.5">
+                          <Link href="/dashboard/payments" className="text-[9px] font-bold text-destructive hover:underline flex items-center gap-0.5">
                             Gestionar <ArrowRight className="w-3 h-3" />
                           </Link>
                         </div>
@@ -595,15 +632,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Upcoming Payments list */}
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+          <div className="bg-card border-none p-6 rounded-2xl shadow-card">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
               <Calendar className="w-4 h-4 text-warning" /> Próximos Vencimientos
             </h3>
 
             {upcomingPayments.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground flex flex-col items-center justify-center gap-1.5 border border-dashed border-border rounded-xl">
-                <Users className="w-6 h-6 text-muted-foreground/40" />
-                <span className="text-xs font-semibold">Sin cobros próximos</span>
+              <div className="py-8 text-center text-ink-muted flex flex-col items-center justify-center gap-1.5 bg-muted/30 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl">
+                <Users className="w-6 h-6 text-ink-muted/40" />
+                <span className="text-xs font-semibold text-foreground">Sin cobros próximos</span>
                 <span className="text-[10px] max-w-[150px]">No hay vencimientos programados en los próximos 15 días.</span>
               </div>
             ) : (
@@ -613,22 +650,22 @@ export default function DashboardPage() {
                   const propName = p.contract?.property?.title || 'Inmueble';
 
                   return (
-                    <div key={p.id} className="p-3 bg-muted/40 border border-border hover:border-muted-foreground/30 rounded-xl flex items-start gap-2.5 transition-all text-xs">
+                    <div key={p.id} className="p-3 bg-muted/20 border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] rounded-xl flex items-start gap-2.5 transition-all text-xs">
                       <div className="p-1 rounded-lg bg-warning/10 text-warning mt-0.5 shrink-0">
                         <Clock className="w-3.5 h-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex justify-between items-center gap-2">
                           <span className="font-bold text-foreground truncate">{tenantName}</span>
-                          <span className="text-muted-foreground text-[10px] font-semibold">
+                          <span className="text-ink-secondary text-[10px] font-semibold">
                             {format(new Date(p.due_date), 'dd MMM', { locale: es })}
                           </span>
                         </div>
-                        <span className="block text-[10px] text-muted-foreground truncate mt-0.5">
+                        <span className="block text-[10px] text-ink-muted truncate mt-0.5">
                           {propName}
                         </span>
-                        <div className="flex items-center justify-between mt-2 pt-1 border-t border-border">
-                          <span className="text-primary font-bold">
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+                          <span className="text-foreground font-bold tabular-nums">
                             {currencySymbol} {Number(p.amount).toLocaleString()}
                           </span>
                           <Link href="/dashboard/payments" className="text-[9px] font-bold text-primary hover:underline flex items-center gap-0.5">
