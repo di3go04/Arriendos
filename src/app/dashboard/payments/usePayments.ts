@@ -1,12 +1,9 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { formatCOP } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
-import { parseISO, isBefore, differenceInDays, addDays, isAfter, format } from 'date-fns';
+import { addDays,differenceInDays,format,isAfter,isBefore,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-export function formatCOP(v: number) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-}
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 export const PAYMENT_METHODS = [
   'Transferencia Bancaria','Nequi','Daviplata','Efectivo','Consignación','Tarjeta Débito/Crédito','PayPal','Otro'
@@ -20,20 +17,20 @@ export const STATUS_OPTS = [
   { value: 'overdue', label: 'Vencido' },
 ];
 
-export function getPaymentStatus(p: any, today: Date) {
+export function getPaymentStatus(p: LooseRecord, today: Date) {
   const isOverdue = !p.paid && isBefore(parseISO(p.due_date), today);
   const days = differenceInDays(parseISO(p.due_date), today);
   const isDueSoon = !p.paid && !isOverdue && days <= 5;
-  if (p.paid) return { key: 'paid', label: 'Pagado', cls: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' };
+  if (p.paid) return { key: 'paid', label: 'Pagado', cls: 'text-blue-600 bg-blue-50 border-blue-200' };
   if (isOverdue) return { key: 'overdue', label: `Vencido (${Math.abs(days)}d)`, cls: 'text-red-600 bg-red-500/10 border-red-500/20' };
   if (isDueSoon) return { key: 'due_soon', label: `Vence en ${days}d`, cls: 'text-amber-600 bg-amber-500/10 border-amber-500/20' };
   return { key: 'pending', label: 'Pendiente', cls: 'text-blue-600 bg-blue-500/10 border-blue-500/20' };
 }
 
-export function usePayments(user: any, profile: any) {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [contracts, setContracts] = useState<any[]>([]);
-  const [properties, setProperties] = useState<any[]>([]);
+export function usePayments(user: LooseRecord | null, profile: LooseRecord | null) {
+  const [payments, setPayments] = useState<LooseRecord[]>([]);
+  const [contracts, setContracts] = useState<LooseRecord[]>([]);
+  const [properties, setProperties] = useState<LooseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -76,7 +73,7 @@ export function usePayments(user: any, profile: any) {
       if (isLandlord) pq = pq.eq('owner_id', user.id);
       const { data: props } = await pq;
       setProperties(props || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching payments:', err);
       setError('No se pudieron cargar los pagos.');
     } finally { setLoading(false); }

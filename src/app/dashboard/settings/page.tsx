@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { User, DollarSign, Bell, Clock, Save, CheckCircle2, Loader2, FileCode, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { DeviceSessionsPanel } from '@/modules/auth-enterprise/client/DeviceSessionsPanel';
+import { MfaEnrollmentCard } from '@/modules/auth-enterprise/client/MfaEnrollmentCard';
+import { AlertTriangle,Bell,CheckCircle2,Clock,FileCode,Loader2,Save,Shield,User } from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -76,7 +78,7 @@ export default function SettingsPage() {
 
       {/* Toast */}
       {saveSuccess && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-lg shadow-modal text-xs font-bold flex items-center gap-2 animate-slide-up">
+        <div className="fixed top-6 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-lg shadow-[0_25px_50px_rgba(0,0,0,0.15)] text-xs font-bold flex items-center gap-2 animate-slide-up">
           <CheckCircle2 className="w-4 h-4" />
           Configuración guardada
         </div>
@@ -92,7 +94,7 @@ export default function SettingsPage() {
       <form onSubmit={handleSaveSettings} className="space-y-6">
 
         {/* Profile */}
-        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-card">
+        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)]">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-2 pb-4 border-b border-border">
             <User className="w-4 h-4 text-primary" />
             Datos del Perfil
@@ -124,7 +126,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications */}
-        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-card">
+        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)]">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-2 pb-4 border-b border-border">
             <Bell className="w-4 h-4 text-primary" />
             Recordatorios
@@ -159,7 +161,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Email templates */}
-        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-card">
+        <div className="bg-card border border-border rounded-lg p-6 space-y-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)]">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-2 pb-4 border-b border-border">
             <FileCode className="w-4 h-4 text-primary" />
             Plantillas de Correo
@@ -183,6 +185,16 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Módulo auth-enterprise: MFA + dispositivos */}
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-6">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            <h2 className="text-sm font-black uppercase tracking-wider text-foreground">Seguridad de cuenta</h2>
+          </div>
+          <MfaEnrollmentCard />
+          <DeviceSessionsPanel />
+        </div>
+
         {/* Actions */}
         <div className="flex items-center justify-between">
           {errorMsg && <span className="text-xs text-destructive font-semibold">{errorMsg}</span>}
@@ -193,7 +205,7 @@ export default function SettingsPage() {
               </span>
             )}
             <button type="submit" disabled={isSaving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-semibold rounded-md shadow-btn text-sm transition-all cursor-pointer disabled:cursor-not-allowed">
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-semibold rounded-md shadow-[0_2px_8px_rgba(37,99,235,0.2)] text-sm transition-all cursor-pointer disabled:cursor-not-allowed">
               {isSaving ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
               ) : (

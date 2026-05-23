@@ -1,43 +1,68 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { PwaInit } from '@/components/modules/PwaInit';
+import PostHogProvider from '@/components/PostHogProvider';
 import { ToastProvider } from '@/components/ui/Toast';
-import PWARegister from '@/components/PWARegister';
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
+import { AuthProvider } from '@/context/AuthContext';
+import { I18nProvider } from '@/context/I18nContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { defaultLocale, locales } from '@/i18n/config';
+import { getMessages } from '@/i18n/request';
+import { cookies, headers } from 'next/headers';
+import { NextIntlClientProvider } from 'next-intl';
+import { ConsentBanner } from '@/modules/gdpr';
 
 export const metadata: Metadata = {
-  title: 'RentNow | Gestión Profesional de Arrendamientos',
-  description: 'Plataforma profesional para la gestión de arrendamientos, contratos, pagos e inquilinos.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://rentnow.app'),
+  title: {
+    default: 'Rentnow | Gestión Profesional de Arrendamientos',
+    template: '%s | Rentnow',
+  },
+  description:
+    'Plataforma profesional para la gestión de arrendamientos, contratos, pagos e inquilinos.',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'RentNow' },
-  icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1e3a5f',
+  themeColor: '#1E3A5F',
   width: 'device-width',
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const headerStore = await headers();
+  const cookieStore = await cookies();
+  const headerLocale = headerStore.get('x-locale');
+  const cookieLocale = cookieStore.get('RentNow_locale')?.value;
+  const locale = locales.includes(headerLocale as any)
+    ? headerLocale!
+    : locales.includes(cookieLocale as any)
+      ? cookieLocale!
+      : defaultLocale;
+  const messages = await getMessages(locale);
+
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        <AuthProvider>
-          <ThemeProvider>
-            <ErrorBoundary>
-              <ToastProvider>
-                <PWARegister />
-                {children}
-              </ToastProvider>
-            </ErrorBoundary>
-          </ThemeProvider>
-        </AuthProvider>
+    <html lang={locale} suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <I18nProvider locale={locale} messages={messages}>
+            <ThemeProvider>
+              <AuthProvider>
+                <PwaInit />
+                <PostHogProvider>
+                  <ToastProvider>
+                    {children}
+                  </ToastProvider>
+                </PostHogProvider>
+                <ConsentBanner />
+              </AuthProvider>
+            </ThemeProvider>
+          </I18nProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

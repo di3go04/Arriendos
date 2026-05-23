@@ -1,22 +1,32 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Contract } from '@/types';
-import {
-  FileSignature, ChevronLeft, Building2, User, DollarSign, Calendar,
-  MapPin, CheckCircle2, Loader2, AlertTriangle, PenLine, X,
-  ChevronRight, Check, Home, ShieldCheck, Receipt
-} from 'lucide-react';
-import { format, parseISO, addMonths, getDaysInMonth, startOfMonth } from 'date-fns';
+import { format,getDaysInMonth,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+AlertTriangle,
+Building2,
+Calendar,
+Check,
+CheckCircle2,
+ChevronLeft,
+DollarSign,
+FileSignature,
+Loader2,
+MapPin,
+PenLine,
+Receipt,
+ShieldCheck,
+User,
+X
+} from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
 
-function formatCOP(v: number) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-}
+import { formatCOP } from '@/lib/format';
 
 export default function SignContractPage() {
   const params = useParams();
@@ -177,20 +187,18 @@ export default function SignContractPage() {
     setSigning(true);
     try {
       const signature = getSignatureData();
-      const now = new Date().toISOString();
       const bothSigned = contract.signed_by_landlord;
-      const newStatus = bothSigned ? 'activo' : 'firmado';
 
-      // Update contract
-      const { error: updateErr } = await supabase
-        .from('contracts')
-        .update({
-          signed_by_tenant: true,
-          tenant_signed_at: now,
-          status: newStatus,
-        })
-        .eq('id', contract.id);
-      if (updateErr) throw updateErr;
+      const signRes = await fetch('/api/modules/e-signature/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contractId: contract.id, signerRole: 'tenant' }),
+      });
+      const signJson = await signRes.json();
+      if (!signRes.ok) throw new Error(signJson.error || 'Error al registrar firma');
+
+      const newStatus = bothSigned ? 'activo' : 'firmado';
+      await supabase.from('contracts').update({ status: newStatus }).eq('id', contract.id);
 
       // Upload signature
       if (signature) {
@@ -273,7 +281,7 @@ export default function SignContractPage() {
   if (!contract) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3">
-        <AlertTriangle className="w-10 h-10 text-rose-500" />
+        <AlertTriangle className="w-10 h-10 text-red-600" />
         <p className="text-sm font-semibold text-muted-foreground">Contrato no encontrado</p>
         <button
           onClick={() => router.push('/dashboard/tenant')}
@@ -288,7 +296,7 @@ export default function SignContractPage() {
   if (signed) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
-        <div className="p-4 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-500">
+        <div className="p-4 rounded-full bg-blue-50 border border-blue-200 text-blue-600">
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <h2 className="text-xl font-extrabold text-foreground">¡Contrato firmado con éxito!</h2>
@@ -365,7 +373,7 @@ export default function SignContractPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+            <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-600">
               <DollarSign className="w-5 h-5" />
             </div>
             <div>
@@ -374,7 +382,7 @@ export default function SignContractPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
+            <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
@@ -462,7 +470,7 @@ export default function SignContractPage() {
             </div>
             <button
               onClick={clearCanvas}
-              className="text-[10px] font-bold text-muted-foreground hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+              className="text-[10px] font-bold text-muted-foreground hover:text-red-600 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <X className="w-3 h-3" />
               Limpiar firma

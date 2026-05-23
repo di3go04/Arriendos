@@ -1,0 +1,1 @@
+export const AVAILABLE_LOCALES = ['es', 'en', 'pt'] as const;

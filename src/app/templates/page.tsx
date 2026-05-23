@@ -1,27 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import BackToHome from '@/components/shared/BackToHome';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ContractTemplate } from '@/types';
-import { useToast } from '@/components/ui/Toast';
-import {
-  FileCode,
-  Plus,
-  Search,
-  Copy,
-  Trash2,
-  Edit,
-  X,
-  Sparkles,
-  Info,
-  Globe,
-  Lock,
-  ChevronRight,
-  Loader2,
-  FileText
-} from 'lucide-react';
 import confetti from 'canvas-confetti';
+import {
+ChevronRight,
+Copy,
+Edit,
+FileCode,
+FileText,
+Globe,
+Info,
+Loader2,
+Lock,
+Plus,
+Search,
+Sparkles,
+Trash2,
+X
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 const SYSTEM_VARIABLES = [
   { key: 'arrendador_nombre', label: 'Nombre del Propietario (Arrendador)', desc: 'Nombre completo del propietario que arrienda' },
@@ -134,9 +135,9 @@ export default function TemplatesPage() {
       const data = await res.json();
       setAiResultContent(data.templateContent || '');
       setAiResultTitle(data.titleSuggested || 'Plantilla de Arrendamiento Generada por IA');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating template with IA:', err);
-      setAiError(err.message || 'Error al generar la plantilla. Por favor intenta de nuevo.');
+      setAiError((err as { message?: string }).message || 'Error al generar la plantilla. Por favor intenta de nuevo.');
     } finally {
       setIsGenerating(false);
     }
@@ -183,9 +184,9 @@ export default function TemplatesPage() {
       toast({ type: 'success', message: '¡Plantilla generada con IA guardada exitosamente!' });
       setIsAiOpen(false);
       fetchTemplates();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving AI template:', err);
-      setAiError(err.message || 'Error al guardar la plantilla.');
+      setAiError((err as { message?: string }).message || 'Error al guardar la plantilla.');
     } finally {
       setIsSubmitting(false);
     }
@@ -315,9 +316,9 @@ export default function TemplatesPage() {
       confetti({ particleCount: 60, spread: 50 });
       setIsEditorOpen(false);
       fetchTemplates();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving template:', err);
-      setErrorMsg(err.message || 'Error al guardar la plantilla.');
+      setErrorMsg((err as { message?: string }).message || 'Error al guardar la plantilla.');
     } finally {
       setIsSubmitting(false);
     }
@@ -382,7 +383,11 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
-      
+      {/* Botón volver al inicio */}
+      <div className="mb-2">
+        <BackToHome />
+      </div>
+
       {/* Header and Add button */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

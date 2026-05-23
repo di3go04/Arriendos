@@ -1,0 +1,1 @@
+export { GET as edgeCache } from "./functions/cache";

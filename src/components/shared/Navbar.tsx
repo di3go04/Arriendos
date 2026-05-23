@@ -1,19 +1,33 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
+import { getPageTitle } from '@/lib/routes';
 import { supabase } from '@/lib/supabase';
-import {
-  Bell, User, Calendar, DollarSign, Clock, Building2, Check,
-  ShieldAlert, LogOut, FileSignature, Info, AlertTriangle,
-  CheckCircle2, Ban, ExternalLink, Loader2, Filter, ChevronDown,
-  X, Home, MessageSquare, Eye, EyeOff, Trash2, Sun, Moon,
-  Search, Menu
-} from 'lucide-react';
-import { format, parseISO, addDays, isAfter, isBefore, differenceInDays } from 'date-fns';
+import { addDays,format,isAfter,isBefore,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+AlertTriangle,
+Ban,
+Bell,
+Calendar,
+Check,
+CheckCircle2,
+Clock,
+DollarSign,
+EyeOff,
+FileSignature,Info,
+Loader2,
+LogOut,
+Menu,
+Moon,
+Search,
+ShieldAlert,
+Sun,
+X
+} from 'lucide-react';
+import { usePathname,useRouter } from 'next/navigation';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface AppNotification {
   id: string;
@@ -63,18 +77,7 @@ function getNotificationLink(n: AppNotification): string {
   return '#';
 }
 
-const PAGE_TITLES: Record<string, string> = {
-  '/properties': 'Mis Propiedades',
-  '/tenants': 'Gestión de Inquilinos',
-  '/contracts': 'Contratos',
-  '/dashboard/payments': 'Pagos',
-  '/payments': 'Pagos',
-  '/templates': 'Plantillas',
-  '/maintenance': 'Incidencias',
-  '/settings': 'Configuración',
-  '/dashboard/landlord': 'Dashboard',
-  '/dashboard/tenant': 'Mi Panel',
-};
+
 
 export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const pathname = usePathname();
@@ -95,15 +98,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     catch (err) { console.error('Error signing out:', err); }
   };
 
-  const getPageTitle = () => {
-    if (pathname.includes('/contracts/new')) return 'Nuevo Contrato';
-    if (pathname.match(/\/contracts\/.+\/sign/)) return 'Firmar Contrato';
-    if (pathname.match(/\/contracts\/.+\/documents/)) return 'Documentos del Contrato';
-    for (const [key, title] of Object.entries(PAGE_TITLES)) {
-      if (pathname.includes(key)) return title;
-    }
-    return 'RentNow';
-  };
+
 
   const generateNotifications = useCallback(async () => {
     if (!user || !profile) return;
@@ -123,7 +118,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
           .from('contracts').select('id, contract_number, property:properties(title)')
           .eq('tenant_id', user.id).eq('status', 'pendiente_firma').eq('signed_by_tenant', false);
         for (const raw of pendingContracts || []) {
-          const c: any = raw;
+          const c: LooseValue = raw;
           if (!(await existsRecent('contrato_pendiente_firma', c.id))) {
             await supabase.from('notifications').insert({ user_id: user.id, contract_id: c.id, type: 'contrato_pendiente_firma', title: 'Contrato pendiente de firma', message: `Tienes un contrato pendiente de firma para ${(Array.isArray(c.property) ? c.property[0]?.title : c.property?.title) || 'la propiedad'}.` });
           }
@@ -170,7 +165,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
       else endingQuery = endingQuery.eq('landlord_id', user.id);
       const { data: endingContracts } = await endingQuery;
       for (const raw of endingContracts || []) {
-        const c: any = raw;
+        const c: LooseValue = raw;
         if (!(await existsRecent('contrato_proximo_vencer', c.id))) {
           await supabase.from('notifications').insert({
             user_id: user.id, contract_id: c.id, type: 'contrato_proximo_vencer', title: 'Contrato próximo a vencer',
@@ -187,7 +182,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
       else expiredQuery = expiredQuery.eq('landlord_id', user.id);
       const { data: expiredContracts } = await expiredQuery;
       for (const raw of expiredContracts || []) {
-        const c: any = raw;
+        const c: LooseValue = raw;
         if (!(await existsRecent('contrato_vencido', c.id))) {
           await supabase.from('notifications').insert({
             user_id: user.id, contract_id: c.id, type: 'contrato_vencido', title: 'Contrato vencido',
@@ -204,7 +199,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
       else signedQuery = signedQuery.eq('landlord_id', user.id);
       const { data: signedContracts } = await signedQuery;
       for (const raw of signedContracts || []) {
-        const c: any = raw;
+        const c: LooseValue = raw;
         if (!(await existsRecent('contrato_firmado', c.id))) {
           await supabase.from('notifications').insert({
             user_id: user.id, contract_id: c.id, type: 'contrato_firmado', title: 'Contrato firmado',
@@ -238,15 +233,9 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     if (!user || !profile) return;
     fetchNotifications();
     generateNotifications().then(() => fetchNotifications());
-    intervalRef.current = setInterval(() => { generateNotifications().then(() => fetchNotifications()); }, 60000);
+    intervalRef.current = setInterval(() => { fetchNotifications(); }, 300000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [user, profile, fetchNotifications, generateNotifications]);
-
-  useEffect(() => {
-    const onFocus = () => { generateNotifications().then(() => fetchNotifications()); };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchNotifications, generateNotifications]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -290,7 +279,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const typeFilters = ['all', 'unread', ...new Set(notifications.map(n => n.type).filter(Boolean) as string[])];
 
   return (
-    <header className="h-14 bg-card/90 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-20">
+    <header className="h-14 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-20 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-3">
         <div className="md:hidden flex items-center gap-2">
           <button
@@ -306,7 +295,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
         <div className="border-l border-border pl-3 h-8 flex flex-col justify-center">
           <h1 className="text-sm font-semibold text-foreground tracking-tight leading-none">
-            {getPageTitle()}
+            {getPageTitle(pathname)}
           </h1>
           <p className="hidden md:block text-[9px] text-ink-muted font-medium mt-1 leading-none">
             {format(new Date(), "eeee, d 'de' MMMM 'de' yyyy", { locale: es })}
@@ -356,13 +345,13 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 </button>
               </div>
 
-              <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border overflow-x-auto shrink-0">
+                <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border overflow-x-auto shrink-0">
                 {typeFilters.slice(0, 6).map(t => (
                   <button key={t} onClick={() => setFilter(t)}
                     className={`text-[9px] font-semibold px-2 py-1 rounded-full border whitespace-nowrap transition-all cursor-pointer ${
                       filter === t
-                        ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-transparent border-border text-ink-tertiary hover:text-foreground'
+                        ? 'bg-primary-subtle border-primary/30 text-primary'
+                        : 'bg-transparent border-border text-muted-foreground hover:text-foreground'
                     }`}>
                     {t === 'all' ? 'Todas' : t === 'unread' ? 'No leídas' : getTypeLabel(t)}
                   </button>

@@ -1,35 +1,31 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { SmartInput } from '@/components/ui/SmartInput';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Property, MaintenanceIssue } from '@/types';
-import {
-  Wrench,
-  Plus,
-  Search,
-  Filter,
-  Calendar,
-  DollarSign,
-  Briefcase,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  X,
-  Edit2,
-  Trash2,
-  Loader2,
-  Building,
-  Phone
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { MaintenanceIssue,Property } from '@/types';
 import confetti from 'canvas-confetti';
-import { motion, AnimatePresence } from 'framer-motion';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SmartInput } from '@/components/ui/SmartInput';
-import { ListSkeleton } from '@/components/ui/Skeleton';
+import { format } from 'date-fns';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlertTriangle,
+Briefcase,
+Building,
+Calendar,
+CheckCircle2,
+Clock,
+Edit2,
+Loader2,
+Plus,
+Search,
+Trash2,
+Wrench,
+X
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 export default function MaintenancePage() {
   const { user, profile } = useAuth();
@@ -82,7 +78,7 @@ export default function MaintenancePage() {
         .order('created_at', { ascending: false });
 
       if (damagesErr) throw damagesErr;
-      setIssues((damages as any[]) || []);
+      setIssues((damages as MaintenanceIssue[]) || []);
 
     } catch (err) {
       console.error('Error fetching maintenance issues:', err);
@@ -195,7 +191,7 @@ export default function MaintenancePage() {
 
       setIsModalOpen(false);
       fetchIssuesAndProperties();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving maintenance issue:', err);
       toast({ type: 'error', message: 'Hubo un problema al guardar la incidencia.' });
     } finally {
@@ -252,7 +248,7 @@ export default function MaintenancePage() {
         
         <button
           onClick={handleOpenCreateModal}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all text-sm cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-[0_2px_8px_rgba(37,99,235,0.2)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Reportar Incidencia</span>
@@ -289,7 +285,7 @@ export default function MaintenancePage() {
               onClick={() => setFilterStatus(fs.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
                 filterStatus === fs.id
-                  ? 'bg-foreground text-background shadow-btn'
+                  ? 'bg-foreground text-background shadow-[0_2px_8px_rgba(37,99,235,0.2)]'
                   : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
               }`}
             >
@@ -335,7 +331,7 @@ export default function MaintenancePage() {
                   visible: { opacity: 1, y: 0 }
                 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-card border-none rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all flex flex-col justify-between space-y-5"
+                className="bg-card border-none rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all flex flex-col justify-between space-y-5"
               >
                 
                 {/* Header info */}
@@ -416,7 +412,7 @@ export default function MaintenancePage() {
                     </button>
                     <button
                       onClick={() => handleDeleteIssue(issue.id)}
-                      className="p-2 rounded-lg border-none bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all cursor-pointer shadow-btn"
+                      className="p-2 rounded-lg border-none bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all cursor-pointer shadow-[0_2px_8px_rgba(37,99,235,0.2)]"
                       title="Eliminar Registro"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -434,7 +430,7 @@ export default function MaintenancePage() {
       {/* CRUD Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border-none rounded-3xl w-full max-w-lg shadow-modal overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-lg shadow-[0_25px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-up my-8">
             
             {/* Header */}
             <div className="p-6 border-b border-border flex items-center justify-between">
@@ -509,7 +505,7 @@ export default function MaintenancePage() {
                   </label>
                   <select
                     value={status}
-                    onChange={(e: any) => setStatus(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value as typeof status)}
                     className="w-full bg-muted border border-border text-foreground text-xs rounded-lg p-3 outline-none font-semibold focus:ring-1 focus:ring-ring"
                   >
                     <option value="pending">Reportada / Pendiente</option>

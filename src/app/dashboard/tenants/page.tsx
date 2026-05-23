@@ -1,27 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Profile } from '@/types';
 import {
-  Users,
-  Search,
-  Mail,
-  Phone,
-  Calendar,
-  Loader2,
-  FileText,
-  UserCheck,
-  UserX,
-  ExternalLink,
-  MessageSquare
+Loader2,
+Mail,
+MessageSquare,
+Phone,
+Search,
+UserCheck,
+Users,
+UserX
 } from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 export default function TenantsPage() {
   const { user } = useAuth();
   
-  const [tenants, setTenants] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<LooseRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterState, setFilterState] = useState('all'); // all, active, inactive
@@ -70,7 +66,7 @@ export default function TenantsPage() {
     const nameMatch = t.full_name?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q) || (t.phone && t.phone.toLowerCase().includes(q));
     
     // Check if tenant has at least one active contract
-    const hasActiveContract = t.contracts?.some((c: any) => c.status === 'activo');
+    const hasActiveContract = t.contracts?.some((c: LooseValue) => c.status === 'activo');
     
     let stateMatch = true;
     if (filterState === 'active') stateMatch = hasActiveContract;
@@ -144,7 +140,7 @@ export default function TenantsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTenants.map((t) => {
             // Find if there is an active lease
-            const activeContract = t.contracts?.find((c: any) => c.status === 'activo');
+            const activeContract = t.contracts?.find((c: LooseValue) => c.status === 'activo');
             const hasActive = !!activeContract;
 
             return (

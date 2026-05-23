@@ -1,7 +1,42 @@
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
+    // Verificar autenticación
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options));
+          },
+        },
+      }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Obtener perfil del usuario para verificar rol
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    // Solo arrendadores y admin pueden generar plantillas con IA
+    if (!profile || !['arrendador', 'admin'].includes(profile.role)) {
+      return NextResponse.json({ error: 'No tiene permisos para generar plantillas' }, { status: 403 });
+    }
+
     const { prompt } = await req.json();
 
     if (!prompt || typeof prompt !== 'string') {
@@ -226,10 +261,10 @@ Sigue estas reglas estrictas:
       templateContent: htmlContent.trim()
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Global error in template generator route:', error);
     return NextResponse.json(
-      { error: error.message || 'Ocurrió un error inesperado al procesar la solicitud.' },
+      { error: (error as { message?: string }).message || 'Ocurrió un error inesperado al procesar la solicitud.' },
       { status: 500 }
     );
   }

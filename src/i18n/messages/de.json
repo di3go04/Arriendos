@@ -1,0 +1,9 @@
+{
+  "menu": { "home": "Startseite", "about": "Über uns", "contact": "Kontakt" },
+  "hero": {
+    "title": "Willkommen auf unserer Plattform",
+    "description": "Entdecken Sie innovative Lösungen für Ihr Unternehmen.",
+    "ctaPrimary": "Loslegen",
+    "ctaSecondary": "Mehr erfahren"
+  }
+}

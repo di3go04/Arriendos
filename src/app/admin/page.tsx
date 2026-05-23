@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import BackToHome from '@/components/shared/BackToHome';
+import Navbar from '@/components/shared/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Users, Building2, FileText, Shield, User, ExternalLink, Calendar } from 'lucide-react';
-import Navbar from '@/components/shared/Navbar';
+import { Building2,FileText,Loader2,Shield,Users } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect,useState } from 'react';
 
 interface ProfileItem {
   id: string;
@@ -77,6 +79,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
+      <BackToHome />
 
       <main className="flex-1 p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full animate-fade-in">
         
@@ -95,6 +98,14 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+
+        <Link
+          href="/admin/configuracion"
+          className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10"
+        >
+          <Shield className="w-4 h-4" />
+          Configuración Stripe (base de datos)
+        </Link>
 
         {/* Global Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -119,7 +130,7 @@ export default function AdminPage() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 w-fit mb-4">
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 w-fit mb-4">
               <FileText className="w-5 h-5" />
             </div>
             <span className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Contratos Totales</span>
@@ -172,7 +183,7 @@ export default function AdminPage() {
                           ? 'bg-red-500/10 border-red-500/20 text-red-500'
                           : p.role === 'arrendador'
                           ? 'bg-blue-500/10 border-blue-500/20 text-blue-500'
-                          : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                          : 'bg-blue-50 border-blue-200 text-blue-600'
                       }`}>
                         {p.role.toUpperCase()}
                       </span>

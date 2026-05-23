@@ -1,31 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Property, Payment } from '@/types';
+import { Payment,Property } from '@/types';
+import { differenceInDays,endOfMonth,format,startOfMonth } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
-  TrendingUp,
-  DollarSign,
-  AlertOctagon,
-  Calendar,
-  Building,
-  ArrowUpRight,
-  Download,
-  Filter,
-  Plus,
-  ArrowRight,
-  TrendingDown,
-  Clock,
-  Briefcase,
-  Users,
-  Check,
-  Globe
+AlertOctagon,
+ArrowRight,
+ArrowUpRight,
+Briefcase,
+Building,
+Calendar,
+Check,
+Clock,
+DollarSign,
+Download,
+Filter,
+Globe,
+Plus,
+TrendingDown,
+TrendingUp,
+Users
 } from 'lucide-react';
 import Link from 'next/link';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { useEffect,useState } from 'react';
+import { Bar,BarChart,CartesianGrid,Legend,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
+import ServiceHealthWidget from '@/components/shared/ServiceHealthWidget';
 
 interface DashboardStats {
   totalPaid: number;
@@ -50,7 +51,7 @@ export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('current-month');
   
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<LooseRecord[]>([]);
   const [upcomingPayments, setUpcomingPayments] = useState<Payment[]>([]);
   const [overduePayments, setOverduePayments] = useState<Payment[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -79,14 +80,14 @@ export default function DashboardPage() {
         setProperties(propsData || []);
 
         // 2. Fetch payments with contract details
-        let payments: any[] = [];
+        let payments: LooseRecord[] = [];
 
         if (profile.role === 'arrendatario') {
           const { data: pays, error: paysErr } = await supabase
             .from('payments').select(`*`).eq('tenant_id', user.id).order('due_date', { ascending: false });
           if (paysErr) throw paysErr;
 
-          const rawPays: any[] = pays || [];
+          const rawPays: LooseRecord[] = pays || [];
           const contractIds = [...new Set(rawPays.map(p => p.contract_id))];
           if (contractIds.length > 0) {
             const { data: contracts } = await supabase
@@ -107,7 +108,7 @@ export default function DashboardPage() {
             const { data: pays, error: paysErr } = await supabase
               .from('payments').select(`*`).in('contract_id', contractIds).order('due_date', { ascending: false });
             if (paysErr) throw paysErr;
-            payments = ((pays as any[]) || []).map(p => ({
+            payments = ((pays as LooseRecord[]) || []).map(p => ({
               ...p,
               contract: (contracts || []).find(c => c.id === p.contract_id) || null
             })).filter(p => p.contract);
@@ -132,7 +133,7 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [user, profile, selectedPropertyId, selectedPeriod]);
 
-  const calculateMetrics = (payments: any[]) => {
+  const calculateMetrics = (payments: LooseRecord[]) => {
     const today = new Date();
     
     let filtered = payments;
@@ -178,7 +179,7 @@ export default function DashboardPage() {
     });
   };
 
-  const processChartData = (payments: any[]) => {
+  const processChartData = (payments: LooseRecord[]) => {
     const monthlyGroups: { [month: string]: { [propName: string]: number } } = {};
     const propertyNames = new Set<string>();
 
@@ -198,7 +199,7 @@ export default function DashboardPage() {
     });
 
     const data = Object.keys(monthlyGroups).map(month => {
-      const item: any = { name: month };
+      const item: LooseValue = { name: month };
       propertyNames.forEach(name => {
         item[name] = monthlyGroups[month][name] || 0;
       });
@@ -218,7 +219,7 @@ export default function DashboardPage() {
     setChartData(data);
   };
 
-  const categorizePayments = (payments: any[]) => {
+  const categorizePayments = (payments: LooseRecord[]) => {
     const today = new Date();
     
     const upcoming = payments
@@ -237,8 +238,8 @@ export default function DashboardPage() {
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
       .slice(0, 5);
 
-    setUpcomingPayments(upcoming);
-    setOverduePayments(overdue);
+    setUpcomingPayments(upcoming as Payment[]);
+    setOverduePayments(overdue as Payment[]);
   };
 
   const handleExportCSV = async () => {
@@ -247,7 +248,7 @@ export default function DashboardPage() {
     const headers = ['Inmueble', 'Inquilino', 'Fecha de Vencimiento', 'Fecha de Pago', 'Monto', 'Estado', 'Notas'];
     
     try {
-      let payments: any[] = [];
+      let payments: LooseRecord[] = [];
 
       if (profile.role === 'arrendatario') {
         const { data } = await supabase
@@ -277,7 +278,7 @@ export default function DashboardPage() {
 
       const sanitized = payments.filter(p => p.contract !== null);
 
-      const rows = sanitized.map((p: any) => [
+      const rows = sanitized.map((p: LooseValue) => [
         p.contract?.property?.title || 'N/A',
         p.contract?.tenant?.full_name || 'N/A',
         p.due_date,
@@ -669,6 +670,9 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* Service Health Integrations */}
+          <ServiceHealthWidget />
 
         </div>
 

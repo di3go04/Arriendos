@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# WhatsApp Baileys session (no subir credenciales)
+/auth_info/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

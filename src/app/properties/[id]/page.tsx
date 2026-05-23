@@ -1,35 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/types';
-import { useToast } from '@/components/ui/Toast';
-import {
-  Building2,
-  MapPin,
-  BedDouble,
-  Bath,
-  Maximize2,
-  DollarSign,
-  Calendar,
-  Layers,
-  Edit2,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ArrowLeft,
-  X,
-  Loader2,
-  AlertTriangle,
-  CheckCircle2,
-  Wrench,
-  EyeOff,
-  Image as ImageIcon,
-  Home
-} from 'lucide-react';
 import confetti from 'canvas-confetti';
+import {
+AlertTriangle,
+ArrowLeft,
+Bath,
+BedDouble,
+Building2,
+Calendar,
+CheckCircle2,
+ChevronLeft,
+ChevronRight,
+DollarSign,
+Edit2,
+EyeOff,
+Home,
+Image as ImageIcon,
+Layers,
+Loader2,
+MapPin,
+Maximize2,
+Trash2,
+Wrench,
+X
+} from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 
 const AMENITIES_LIST = [
   'Wifi',
@@ -242,9 +242,9 @@ export default function PropertyDetailPage() {
       setIsEditModalOpen(false);
       fetchPropertyDetails();
       setActiveImageIndex(0);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error updating property:', err);
-      setErrorMsg(err.message || 'Hubo un error al actualizar la propiedad.');
+      setErrorMsg((err as { message?: string }).message || 'Hubo un error al actualizar la propiedad.');
     } finally {
       setIsSubmitting(false);
     }
@@ -401,7 +401,7 @@ export default function PropertyDetailPage() {
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5 z-10">
                     {images.map((_, idx) => (
                       <button
-                        key={idx}
+                        key={`image-indicator-${idx}`}
                         onClick={() => setActiveImageIndex(idx)}
                         className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
                           idx === activeImageIndex
@@ -434,7 +434,7 @@ export default function PropertyDetailPage() {
             <div className="flex gap-2 overflow-x-auto pb-2">
               {images.map((url, idx) => (
                 <button
-                  key={idx}
+                  key={`${url}-${idx}`}
                   onClick={() => setActiveImageIndex(idx)}
                   className={`w-20 h-16 rounded-xl border overflow-hidden shrink-0 transition-all ${
                     idx === activeImageIndex
@@ -545,7 +545,7 @@ export default function PropertyDetailPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {property.amenities.map((amenity, idx) => (
                     <span
-                      key={idx}
+                      key={`${amenity}-${idx}`}
                       className="bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold px-2.5 py-1 rounded-lg"
                     >
                       {amenity}
@@ -634,7 +634,7 @@ export default function PropertyDetailPage() {
                     </label>
                     <select
                       value={type}
-                      onChange={(e: any) => setType(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setType(e.target.value as Property['type'])}
                       className="w-full bg-muted border border-border text-foreground text-xs rounded-xl focus:ring-1 focus:ring-primary focus:border-primary p-3 outline-none font-semibold cursor-pointer"
                     >
                       <option value="apartamento">Apartamento</option>
@@ -651,7 +651,7 @@ export default function PropertyDetailPage() {
                     </label>
                     <select
                       value={status}
-                      onChange={(e: any) => setStatus(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value as Property['status'])}
                       className="w-full bg-muted border border-border text-foreground text-xs rounded-xl focus:ring-1 focus:ring-primary focus:border-primary p-3 outline-none font-semibold cursor-pointer"
                     >
                       <option value="disponible">Disponible</option>
@@ -849,7 +849,7 @@ export default function PropertyDetailPage() {
                       <div className="flex flex-wrap gap-1.5">
                         {selectedAmenities.map((amenity, idx) => (
                           <span
-                            key={idx}
+                            key={`${amenity}-${idx}`}
                             className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-lg"
                           >
                             {amenity}
@@ -879,7 +879,7 @@ export default function PropertyDetailPage() {
                     <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Imágenes Actuales (Presiona X para eliminar):</span>
                     <div className="grid grid-cols-4 gap-2">
                       {existingImages.map((url, idx) => (
-                        <div key={idx} className="h-16 rounded-lg relative overflow-hidden border border-border bg-muted">
+                        <div key={`${url}-${idx}`} className="h-16 rounded-lg relative overflow-hidden border border-border bg-muted">
                           <img src={url} alt="Inmueble" className="w-full h-full object-cover" />
                           <button
                             type="button"
@@ -916,7 +916,7 @@ export default function PropertyDetailPage() {
                     <span className="block text-[9px] font-bold text-primary uppercase tracking-wider">Nuevas imágenes a subir:</span>
                     <div className="grid grid-cols-4 gap-2">
                       {previewUrls.map((url, idx) => (
-                        <div key={idx} className="h-16 rounded-lg relative overflow-hidden border border-border group bg-muted">
+                        <div key={`${url}-${idx}`} className="h-16 rounded-lg relative overflow-hidden border border-border group bg-muted">
                           <img src={url} alt="Vista previa" className="w-full h-full object-cover" />
                           <button
                             type="button"

@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext,useCallback,useContext,useEffect,useRef,useState } from 'react';
 
 type Theme = 'light' | 'dark';
+
+const STORAGE_KEY = 'RentNow_theme';
 
 interface ThemeCtx {
   theme: Theme;
@@ -15,29 +17,41 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
+  if (saved === 'light' || saved === 'dark') return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+  const mediaRef = useRef<MediaQueryList | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('RentNow_theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = saved || (prefersDark ? 'dark' : 'light');
+    const initial = getInitialTheme();
     setTheme(initial);
     document.documentElement.classList.toggle('dark', initial === 'dark');
-    setMounted(true);
+
+    mediaRef.current = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = (e: MediaQueryListEvent) => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        const next = e.matches ? 'dark' : 'light';
+        setTheme(next);
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    };
+    mediaRef.current.addEventListener('change', listener);
+    return () => mediaRef.current?.removeEventListener('change', listener);
   }, []);
 
   const toggleTheme = useCallback(() => {
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    localStorage.setItem('RentNow_theme', next);
+    localStorage.setItem(STORAGE_KEY, next);
     document.documentElement.classList.toggle('dark', next === 'dark');
   }, [theme]);
-
-  if (!mounted) {
-    return <>{children}</>;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

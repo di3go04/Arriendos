@@ -1,23 +1,35 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/Toast';
-import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import {
-  FileText, UploadCloud, Trash2, Download, ChevronLeft, Loader2,
-  Building2, User, Calendar, FilePenLine, Edit3, Save, X,
-  FileImage, FileArchive, ClipboardList, FileSpreadsheet, Plus,
-  AlertTriangle, CheckCircle2, FileSignature, MessageSquareText,
-  StickyNote
-} from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+AlertTriangle,
+Building2,
+Calendar,
+CheckCircle2,
+ChevronLeft,
+ClipboardList,
+Download,
+FileArchive,
+FileImage,
+FileText,
+Loader2,
+Save,
+StickyNote,
+Trash2,
+UploadCloud,
+User,
+X
+} from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import { useEffect,useRef,useState } from 'react';
 
-const typeConfig: Record<string, { label: string; icon: any; cls: string }> = {
+const typeConfig: Record<string, { label: string; icon: LooseValue; cls: string }> = {
   inventario: { label: 'Inventario', icon: ClipboardList, cls: 'bg-blue-500/10 border-blue-500/25 text-blue-500' },
-  foto: { label: 'Foto', icon: FileImage, cls: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-500' },
+  foto: { label: 'Foto', icon: FileImage, cls: 'bg-blue-50 border-blue-200 text-blue-600' },
   anexo: { label: 'Anexo', icon: FileText, cls: 'bg-amber-500/10 border-amber-500/25 text-amber-500' },
   otro: { label: 'Otro', icon: FileArchive, cls: 'bg-muted border-border text-muted-foreground' },
 };
@@ -28,8 +40,8 @@ export default function ContractDocumentsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const [contract, setContract] = useState<any | null>(null);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [contract, setContract] = useState<LooseRecord | null>(null);
+  const [documents, setDocuments] = useState<LooseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingNotes, setSavingNotes] = useState(false);
 
@@ -47,7 +59,7 @@ export default function ContractDocumentsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirm
-  const [deleteDoc, setDeleteDoc] = useState<any | null>(null);
+  const [deleteDoc, setDeleteDoc] = useState<LooseRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const [successMsg, setSuccessMsg] = useState('');
@@ -196,15 +208,10 @@ export default function ContractDocumentsPage() {
     }
   };
 
-  const canDelete = (doc: any) => {
+  const canDelete = (doc: LooseValue) => {
     if (!user) return false;
     if (!contract) return false;
     return doc.uploaded_by === user.id || contract.landlord_id === user.id;
-  };
-
-  const getFileIcon = (type: string) => {
-    const cfg = typeConfig[type];
-    return cfg?.icon || FileText;
   };
 
   if (loading) {
@@ -218,21 +225,19 @@ export default function ContractDocumentsPage() {
   if (accessDenied || !contract) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3">
-        <AlertTriangle className="w-10 h-10 text-rose-500" />
+        <AlertTriangle className="w-10 h-10 text-red-600" />
         <p className="text-sm font-bold text-muted-foreground">Acceso denegado</p>
         <button onClick={() => router.push('/dashboard/tenant')} className="text-xs text-primary font-bold hover:underline cursor-pointer">Volver</button>
       </div>
     );
   }
 
-  const isLandlord = profile?.role === 'arrendador';
-
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-16 animate-fade-in">
 
       {/* Success toast */}
       {successMsg && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-fade-in">
+        <div className="fixed top-6 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4" />
           {successMsg}
         </div>
@@ -347,7 +352,7 @@ export default function ContractDocumentsPage() {
                   {canDelete(doc) && (
                     <button
                       onClick={() => setDeleteDoc(doc)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-bold transition-all cursor-pointer ml-auto"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-600 hover:text-white text-[10px] font-bold transition-all cursor-pointer ml-auto"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       Eliminar
@@ -378,7 +383,7 @@ export default function ContractDocumentsPage() {
               <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
             )}
             {!notesDirty && !savingNotes && notes.length > 0 && (
-              <span className="text-[10px] text-emerald-500 flex items-center gap-1">
+              <span className="text-[10px] text-blue-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 Guardado
               </span>
@@ -437,7 +442,7 @@ export default function ContractDocumentsPage() {
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Tipo de documento</label>
                 <select
                   value={uploadType}
-                  onChange={e => setUploadType(e.target.value as any)}
+                  onChange={e => setUploadType(e.target.value as typeof uploadType)}
                   className="w-full bg-muted border border-border text-foreground text-sm rounded-xl p-3 outline-none cursor-pointer"
                 >
                   <option value="anexo">Anexo</option>
@@ -457,12 +462,12 @@ export default function ContractDocumentsPage() {
                 >
                   {uploadFile ? (
                     <div className="space-y-2">
-                      <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
+                      <CheckCircle2 className="w-8 h-8 mx-auto text-blue-600" />
                       <p className="text-xs font-bold text-foreground">{uploadFile.name}</p>
                       <p className="text-[10px] text-muted-foreground">{(uploadFile.size / 1024).toFixed(1)} KB</p>
                       <button
                         onClick={(e) => { e.stopPropagation(); setUploadFile(null); }}
-                        className="text-[10px] font-bold text-rose-500 hover:underline cursor-pointer"
+                        className="text-[10px] font-bold text-red-600 hover:underline cursor-pointer"
                       >
                         Quitar archivo
                       </button>
@@ -513,7 +518,7 @@ export default function ContractDocumentsPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-card border border-border rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div className="p-6 text-center space-y-4">
-              <div className="p-3 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 w-fit mx-auto">
+              <div className="p-3 rounded-full bg-red-50 border border-red-200 text-red-600 w-fit mx-auto">
                 <AlertTriangle className="w-8 h-8" />
               </div>
               <div>
@@ -533,7 +538,7 @@ export default function ContractDocumentsPage() {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-red-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {deleting ? (
                     <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Eliminando...</>

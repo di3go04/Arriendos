@@ -1,0 +1,54 @@
+{
+  "home": {
+    "title": "RentNow - Smart Property Management",
+    "subtitle": "The most complete SaaS for rental management with AI",
+    "features": [
+      "PayPal payments",
+      "Public property portal",
+      "PWA offline mode",
+      "AI delinquency prediction",
+      "Financial reports",
+      "Marketplace of services"
+    ]
+  },
+  "nav": {
+    "home": "Home",
+    "properties": "Properties",
+    "pricing": "Pricing",
+    "login": "Login",
+    "register": "Register"
+  },
+  "cta": {
+    "start": "Start free trial",
+    "learn": "Learn more"
+  },
+  "hero": {
+    "tagline": "Professional rental platform",
+    "title": "Professional rental management",
+    "subtitle": "Complete control of properties, tenants and payments in one place. Predictive AI, public portal and multi-currency.",
+    "cta": "Get started now",
+    "demo": "See demo"
+  },
+  "features": {
+    "title": "Main features",
+    "subtitle": "Why thousands of property owners trust RentNow"
+  },
+  "comparing": {
+    "title": "Plan comparison"
+  },
+  "pricing": {
+    "popular": "Most popular",
+    "title": "Plans and pricing",
+    "subtitle": "Choose the plan that best fits your needs",
+    "features": "Features",
+    "plan_basic": "Basic",
+    "plan_pro": "Professional",
+    "plan_business": "Business",
+    "monthly": "/month",
+    "cta": {
+      "basic": "Start free",
+      "pro": "Get professional",
+      "business": "Get business"
+    }
+  }
+}

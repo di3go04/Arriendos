@@ -1,5 +1,3 @@
-import React from 'react';
-import { motion } from 'framer-motion';
 
 interface SkeletonProps {
   className?: string;
@@ -7,76 +5,50 @@ interface SkeletonProps {
 
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0.5 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        repeat: Infinity,
-        repeatType: 'reverse',
-        duration: 1.5,
-        ease: 'easeInOut',
-      }}
-      className={`bg-slate-200 dark:bg-slate-800 rounded-md ${className}`}
+    <div
+      className={`bg-gradient-to-r from-[#EDF2F7] via-[#E2E8F0] to-[#EDF2F7] bg-[length:200%_100%] animate-[shimmer_1.8s_ease-in-out_infinite] rounded-md ${className}`}
     />
   );
 }
 
-export function CardSkeleton() {
+export function SkeletonText({ lines = 3 }: { lines?: number }) {
   return (
-    <div className="bg-card border-none rounded-2xl p-6 shadow-card flex flex-col justify-between space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3 w-full">
-          <Skeleton className="h-3 w-24 rounded-full" />
-          <Skeleton className="h-5 w-3/4 rounded-lg" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-3 w-4 rounded-full" />
-            <Skeleton className="h-3 w-1/2 rounded-full" />
-          </div>
-        </div>
-        <Skeleton className="h-5 w-20 rounded-full shrink-0" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 bg-muted/40 p-4 rounded-xl">
-        <div className="space-y-2">
-          <Skeleton className="h-2.5 w-16" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-2.5 w-16" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-2.5 w-16" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-2.5 w-16" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-20" />
-      </div>
-
-      <div className="flex items-center justify-between border-t border-border pt-4">
-        <Skeleton className="h-4 w-24" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-7 w-20 rounded-lg" />
-          <Skeleton className="h-7 w-20 rounded-lg" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function ListSkeleton({ count = 2 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {Array.from({ length: count }).map((_, i) => (
-        <CardSkeleton key={i} />
+    <div className="space-y-2">
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} className={`h-3 rounded-full ${i === lines - 1 ? 'w-3/4' : 'w-full'}`} />
       ))}
     </div>
   );
 }
+
+export function SkeletonCircle({ size = 'w-12 h-12' }: { size?: string }) {
+  return <Skeleton className={`${size} rounded-full`} />;
+}
+
+export function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] p-5 space-y-4">
+      <Skeleton className="h-40 w-full rounded-xl" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-3 w-1/2" />
+      <div className="flex justify-between pt-2 border-t border-[#EDF2F7]">
+        <Skeleton className="h-8 w-20" />
+        <Skeleton className="h-8 w-16" />
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonGrid({ count = 3 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  );
+}
+
+/* backward-compatible aliases */
+export const ListSkeleton = SkeletonGrid;
+export const CardSkeleton = SkeletonCard;

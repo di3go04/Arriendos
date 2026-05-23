@@ -1,0 +1,54 @@
+{
+  "home": {
+    "title": "RentNow - Gestion Intelligente des Locations",
+    "subtitle": "Le SaaS le plus complet pour la gestion de locations avec IA",
+    "features": [
+      "Paiements PayPal",
+      "Portail public des propriétés",
+      "Mode hors ligne PWA",
+      "Prédiction de l'impayé avec IA",
+      "Rapports financiers",
+      "Marketplace de services"
+    ]
+  },
+  "nav": {
+    "home": "Accueil",
+    "properties": "Propriétés",
+    "pricing": "Tarifs",
+    "login": "Se connecter",
+    "register": "S'inscrire"
+  },
+  "cta": {
+    "start": "Commencer l'essai gratuit",
+    "learn": "En savoir plus"
+  },
+  "hero": {
+    "tagline": "Plateforme professionnelle de locations",
+    "title": "Gestion professionnelle des locations",
+    "subtitle": "Contrôle total des propriétés, locataires et paiements depuis un seul endroit. IA prédictive, portail public et multi-monnaie.",
+    "cta": "Commencer maintenant",
+    "demo": "Voir la démonstration"
+  },
+  "features": {
+    "title": "Caractéristiques principales",
+    "subtitle": "Pourquoi des milliers de propriétaires font confiance à RentNow"
+  },
+  "comparing": {
+    "title": "Comparaison des plans"
+  },
+  "pricing": {
+    "popular": "Le plus populaire",
+    "title": "Plans et tarifs",
+    "subtitle": "Choisissez le plan qui correspond le mieux à vos besoins",
+    "features": "Caractéristiques",
+    "plan_basic": "Basique",
+    "plan_pro": "Professionnel",
+    "plan_business": "Affaire",
+    "monthly": "/mois",
+    "cta": {
+      "basic": "Commencer gratuitement",
+      "pro": "Obtenir professionnel",
+      "business": "Obtenir affaire"
+    }
+  }
+}

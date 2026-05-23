@@ -1,39 +1,33 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ListSkeleton } from '@/components/ui/Skeleton';
+import { SmartInput } from '@/components/ui/SmartInput';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Property, Profile, ContractTemplate, Contract } from '@/types';
-import {
-  FileText,
-  Plus,
-  Calendar,
-  DollarSign,
-  Building,
-  User,
-  Users,
-  CheckCircle2,
-  AlertTriangle,
-  X,
-  FileDown,
-  Loader2,
-  ClipboardList,
-  PenTool,
-  Check,
-  Building2,
-  CalendarDays,
-  FileSignature,
-  Trash2,
-  ExternalLink,
-  Paperclip
-} from 'lucide-react';
-import { format } from 'date-fns';
+import { Contract,ContractTemplate,Profile,Property } from '@/types';
 import confetti from 'canvas-confetti';
-import { motion, AnimatePresence } from 'framer-motion';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SmartInput } from '@/components/ui/SmartInput';
-import { ListSkeleton, CardSkeleton } from '@/components/ui/Skeleton';
+import { format } from 'date-fns';
+import { AnimatePresence,motion } from 'framer-motion';
+import {
+AlertTriangle,
+Building,
+CalendarDays,
+Check,
+ClipboardList,
+ExternalLink,
+FileSignature,
+FileText,
+Loader2,
+Paperclip,
+PenTool,
+Plus,
+Trash2,
+User,
+X
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 export default function LeasesPage() {
   const { user, profile } = useAuth();
@@ -73,7 +67,7 @@ export default function LeasesPage() {
   const [viewingContract, setViewingContract] = useState<Contract | null>(null);
 
   // Documents/Attachments Manager states
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<LooseRecord[]>([]);
   const [isDocsLoading, setIsDocsLoading] = useState(false);
   const [activeViewerTab, setActiveViewerTab] = useState<'contract' | 'documents'>('contract');
   const [newDocName, setNewDocName] = useState('');
@@ -298,7 +292,7 @@ export default function LeasesPage() {
         fecha_fin: endDate || 'Indefinido',
       });
 
-      const { data: newContract, error } = await supabase
+      const { error } = await supabase
         .from('contracts')
         .insert({
           property_id: propertyId,
@@ -329,7 +323,7 @@ export default function LeasesPage() {
       setIsCreateModalOpen(false);
       fetchContracts();
       fetchCreationDependencies();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating contract:', err);
       toast({ type: 'error', message: 'Ocurrió un error al crear el contrato.' });
     } finally {
@@ -471,7 +465,7 @@ export default function LeasesPage() {
     try {
       const isLandlord = profile.role === 'arrendador';
       
-      const payload: any = {};
+      const payload: LooseRecord = {};
       if (isLandlord) {
         payload.signed_by_landlord = true;
         payload.landlord_signed_at = new Date().toISOString();
@@ -483,7 +477,7 @@ export default function LeasesPage() {
       }
 
       // 1. Update contract signing flags
-      const { data: updatedContract, error } = await supabase
+      const { error } = await supabase
         .from('contracts')
         .update(payload)
         .eq('id', signingContract.id)
@@ -538,7 +532,7 @@ export default function LeasesPage() {
         {profile?.role === 'arrendador' && (
           <button
             onClick={handleOpenCreateModal}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all text-sm cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-[0_2px_8px_rgba(37,99,235,0.2)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Emitir Contrato</span>
@@ -599,7 +593,7 @@ export default function LeasesPage() {
                   visible: { opacity: 1, y: 0 }
                 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className={`bg-card border-none rounded-2xl p-6 shadow-card hover:shadow-card-hover flex flex-col justify-between space-y-6 transition-all ${
+                className={`bg-card border-none rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between space-y-6 transition-all ${
                   c.status === 'cancelado' ? 'opacity-70' : ''
                 }`}
               >
@@ -699,7 +693,7 @@ export default function LeasesPage() {
                     {!hasSigned && c.status !== 'cancelado' && (
                       <button
                         onClick={() => handleOpenSignModal(c)}
-                        className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-btn hover:shadow-card-hover"
+                        className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer shadow-[0_2px_8px_rgba(37,99,235,0.2)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]"
                       >
                         <PenTool className="w-3.5 h-3.5" />
                         <span>Firmar Digitalmente</span>
@@ -710,7 +704,7 @@ export default function LeasesPage() {
                     {profile?.role === 'arrendador' && c.status !== 'cancelado' && (
                       <button
                         onClick={() => handleRescindContract(c)}
-                        className="px-3.5 py-1.5 rounded-lg border-none text-destructive bg-destructive/10 hover:bg-destructive/20 text-[10px] font-bold shadow-btn transition-all cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-lg border-none text-destructive bg-destructive/10 hover:bg-destructive/20 text-[10px] font-bold shadow-[0_2px_8px_rgba(37,99,235,0.2)] transition-all cursor-pointer"
                       >
                         Rescindir
                       </button>
@@ -728,7 +722,7 @@ export default function LeasesPage() {
       {/* CREATE CONTRACT MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border-none rounded-3xl w-full max-w-xl shadow-modal overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-up my-8">
             <div className="p-6 border-b border-border flex items-center justify-between">
               <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
                 <FileSignature className="w-5 h-5 text-primary" />
@@ -932,7 +926,7 @@ export default function LeasesPage() {
       {/* READ CONTRACT MODAL */}
       {viewingContract && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border-none rounded-3xl w-full max-w-3xl shadow-modal overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-3xl shadow-[0_25px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-up my-8">
             
             {/* Modal Header */}
             <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
@@ -1157,7 +1151,7 @@ export default function LeasesPage() {
       {/* DRAWING SIGNATURE CANVAS MODAL */}
       {isSignModalOpen && signingContract && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-card border-none rounded-3xl w-full max-w-md shadow-modal overflow-hidden animate-scale-up my-8">
+          <div className="bg-card border-none rounded-3xl w-full max-w-md shadow-[0_25px_50px_rgba(0,0,0,0.15)] overflow-hidden animate-scale-up my-8">
             <div className="p-5 border-b border-border flex items-center justify-between">
               <h3 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
                 <PenTool className="w-4 h-4 text-primary animate-pulse" />

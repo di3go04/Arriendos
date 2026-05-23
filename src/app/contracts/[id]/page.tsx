@@ -1,32 +1,43 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import {
-  FileText, Building2, User, DollarSign, Calendar, MapPin, Phone,
-  Mail, CheckCircle2, XCircle, Clock, AlertTriangle, ArrowLeft,
-  Download, RefreshCw, Ban, Check, Loader2, ChevronRight,
-  FileSignature, StickyNote, CreditCard, ChevronDown, Plus,
-  Circle, CircleCheck, Trash2, UploadCloud, PenLine, Search,
-  Eye, Home, ShieldCheck, TrendingUp, Percent, FileSpreadsheet,
-  Receipt
-} from 'lucide-react';
-import { format, parseISO, differenceInDays, addDays, isAfter, isBefore, differenceInCalendarDays } from 'date-fns';
+import { addDays,differenceInCalendarDays,differenceInDays,format,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+AlertTriangle,ArrowLeft,
+Ban,
+Building2,
+Calendar,
+Check,
+CheckCircle2,
+Clock,
+DollarSign,
+Download,
+Eye,
+FileSignature,
+FileText,
+Loader2,
+MapPin,
+RefreshCw,
+ShieldCheck,
+StickyNote,
+UploadCloud,
+User,
+XCircle
+} from 'lucide-react';
+import { useParams,useRouter } from 'next/navigation';
+import React,{ useEffect,useState } from 'react';
 
-function formatCOP(v: number) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-}
+import { formatCOP } from '@/lib/format';
 
 const statusConfig: Record<string, { label: string; cls: string }> = {
   borrador: { label: 'Borrador', cls: 'bg-muted border-border text-muted-foreground' },
   pendiente_firma: { label: 'Pendiente de Firma', cls: 'bg-amber-500/10 border-amber-500/25 text-amber-500' },
   firmado: { label: 'Firmado', cls: 'bg-blue-500/10 border-blue-500/25 text-blue-500' },
-  activo: { label: 'Activo', cls: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-500' },
+  activo: { label: 'Activo', cls: 'bg-slate-100 border-slate-200 text-slate-700' },
   finalizado: { label: 'Finalizado', cls: 'bg-slate-500/10 border-slate-500/25 text-slate-500' },
-  cancelado: { label: 'Cancelado', cls: 'bg-rose-500/10 border-rose-500/25 text-rose-500' },
+  cancelado: { label: 'Cancelado', cls: 'bg-red-50 border-red-200 text-red-600' },
 };
 
 export default function ContractDetailPage() {
@@ -34,9 +45,9 @@ export default function ContractDetailPage() {
   const router = useRouter();
   const { user, profile } = useAuth();
 
-  const [contract, setContract] = useState<any | null>(null);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [contract, setContract] = useState<LooseRecord | null>(null);
+  const [payments, setPayments] = useState<LooseRecord[]>([]);
+  const [documents, setDocuments] = useState<LooseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [tab, setTab] = useState<'resumen' | 'pagos' | 'documentos' | 'historial'>('resumen');
@@ -106,7 +117,7 @@ export default function ContractDetailPage() {
     if (!contract) return;
     setActionLoading(action);
     try {
-      const updates: any = {};
+      const updates: LooseRecord = {};
       if (action === 'finalizar') updates.status = 'finalizado';
       if (action === 'cancelar') updates.status = 'cancelado';
       if (action === 'renovar') {
@@ -177,7 +188,7 @@ export default function ContractDetailPage() {
   // Timeline
   const buildTimeline = () => {
     if (!contract) return [];
-    const events: { date: string; type: string; title: string; desc: string; icon: any; cls: string }[] = [];
+    const events: { date: string; type: string; title: string; desc: string; icon: LooseValue; cls: string }[] = [];
 
     // Created
     events.push({
@@ -197,7 +208,7 @@ export default function ContractDetailPage() {
         title: 'Firma del arrendador',
         desc: `${contract.landlord?.full_name || 'Arrendador'} firmó el contrato.`,
         icon: FileSignature,
-        cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+        cls: 'text-blue-600 bg-blue-50 border-blue-200',
       });
     }
 
@@ -209,7 +220,7 @@ export default function ContractDetailPage() {
         title: 'Firma del arrendatario',
         desc: `${contract.tenant?.full_name || 'Arrendatario'} firmó el contrato.`,
         icon: CheckCircle2,
-        cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+        cls: 'text-blue-600 bg-blue-50 border-blue-200',
       });
     }
 
@@ -221,7 +232,7 @@ export default function ContractDetailPage() {
         title: 'Contrato activado',
         desc: 'El contrato está en vigor.',
         icon: ShieldCheck,
-        cls: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+        cls: 'text-blue-600 bg-blue-50 border-blue-200',
       });
     }
     if (contract.status === 'finalizado') {
@@ -241,7 +252,7 @@ export default function ContractDetailPage() {
         title: 'Contrato cancelado',
         desc: 'El contrato fue cancelado.',
         icon: XCircle,
-        cls: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+        cls: 'text-red-600 bg-red-50 border-red-200',
       });
     }
 
@@ -253,7 +264,7 @@ export default function ContractDetailPage() {
         title: p.paid ? 'Pago realizado' : 'Pago programado',
         desc: `${formatCOP(p.amount)} — ${p.paid ? 'Pagado' : 'Pendiente'}${p.payment_method ? ` (${p.payment_method})` : ''}`,
         icon: p.paid ? DollarSign : Clock,
-        cls: p.paid ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+        cls: p.paid ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-amber-500 bg-amber-500/10 border-amber-500/20',
       });
     }
 
@@ -283,7 +294,7 @@ export default function ContractDetailPage() {
   if (accessDenied || !contract) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-3">
-        <AlertTriangle className="w-10 h-10 text-rose-500" />
+        <AlertTriangle className="w-10 h-10 text-red-600" />
         <p className="text-sm font-bold text-muted-foreground">Acceso denegado</p>
         <button onClick={() => router.push('/dashboard/leases')} className="text-xs text-primary font-bold hover:underline cursor-pointer">Volver</button>
       </div>
@@ -293,7 +304,6 @@ export default function ContractDetailPage() {
   const timeline = buildTimeline();
   const sc = statusConfig[contract.status] || statusConfig.borrador;
   const remainingDays = contract.end_date ? differenceInCalendarDays(parseISO(contract.end_date), new Date()) : null;
-  const isLandlord = profile?.role === 'arrendador';
   const totalPaid = payments.filter(p => p.paid).reduce((s, p) => s + p.amount, 0);
   const totalPending = payments.filter(p => !p.paid).reduce((s, p) => s + p.amount, 0);
   const nextPayment = payments.filter(p => !p.paid).sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
@@ -303,7 +313,7 @@ export default function ContractDetailPage() {
 
       {/* Success toast */}
       {successMsg && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-fade-in">
+        <div className="fixed top-6 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4" />
           {successMsg}
         </div>
@@ -357,7 +367,7 @@ export default function ContractDetailPage() {
             <button
               onClick={() => handleAction('finalizar')}
               disabled={actionLoading === 'finalizar'}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-500/20 text-rose-500 hover:bg-rose-500/10 text-xs font-bold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {actionLoading === 'finalizar' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
               Finalizar
@@ -367,7 +377,7 @@ export default function ContractDetailPage() {
             <button
               onClick={() => handleAction('cancelar')}
               disabled={actionLoading === 'cancelar'}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-rose-500/20 text-rose-500 hover:bg-rose-500/10 text-xs font-bold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {actionLoading === 'cancelar' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
               Cancelar
@@ -448,13 +458,13 @@ export default function ContractDetailPage() {
               <div className="p-4 rounded-2xl border border-border/60">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                    <div className="p-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-600">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm text-foreground">Arrendador</span>
                   </div>
                   {contract.signed_by_landlord ? (
-                    <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3 h-3" /> Firmado
                     </span>
                   ) : (
@@ -471,13 +481,13 @@ export default function ContractDetailPage() {
               <div className="p-4 rounded-2xl border border-border/60">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                    <div className="p-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-600">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm text-foreground">Arrendatario</span>
                   </div>
                   {contract.signed_by_tenant ? (
-                    <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                       <CheckCircle2 className="w-3 h-3" /> Firmado
                     </span>
                   ) : (
@@ -499,13 +509,13 @@ export default function ContractDetailPage() {
               remainingDays <= 30
                 ? 'bg-amber-500/5 border-amber-500/20'
                 : remainingDays <= 0
-                ? 'bg-rose-500/5 border-rose-500/20'
-                : 'bg-emerald-500/5 border-emerald-500/20'
+                ? 'bg-red-50 border-red-200'
+                : 'bg-blue-50 border-blue-200'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`p-2.5 rounded-xl border ${
-                    remainingDays <= 30 ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                    remainingDays <= 30 ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-blue-50 border-blue-200 text-blue-600'
                   }`}>
                     <Calendar className="w-5 h-5" />
                   </div>
@@ -559,7 +569,7 @@ export default function ContractDetailPage() {
 
           {/* Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
               <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Pagado</span>
               <span className="block text-xl font-extrabold text-foreground mt-1">{formatCOP(totalPaid)}</span>
             </div>
@@ -609,11 +619,11 @@ export default function ContractDetailPage() {
                         <td className="px-5 py-4 text-muted-foreground">{format(parseISO(p.due_date), 'dd/MMM/yyyy', { locale: es })}</td>
                         <td className="px-5 py-4">
                           {p.paid ? (
-                            <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                               <CheckCircle2 className="w-3 h-3" /> Pagado
                             </span>
                           ) : new Date(p.due_date) < new Date() ? (
-                            <span className="inline-flex items-center gap-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                               <AlertTriangle className="w-3 h-3" /> Vencido
                             </span>
                           ) : (
@@ -664,7 +674,7 @@ export default function ContractDetailPage() {
                 <div key={d.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
                   <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border mb-3 ${
                     d.type === 'inventario' ? 'bg-blue-500/10 border-blue-500/25 text-blue-500' :
-                    d.type === 'foto' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-500' :
+                    d.type === 'foto' ? 'bg-blue-50 border-blue-200 text-blue-600' :
                     d.type === 'anexo' ? 'bg-amber-500/10 border-amber-500/25 text-amber-500' :
                     'bg-muted border-border text-muted-foreground'
                   }`}>
@@ -705,7 +715,6 @@ export default function ContractDetailPage() {
               <div className="space-y-0">
                 {timeline.map((ev, i) => {
                   const Icon = ev.icon;
-                  const isLast = i === timeline.length - 1;
                   return (
                     <div key={i} className="relative flex items-start gap-5 pb-8 last:pb-0">
                       {/* Dot */}
@@ -736,7 +745,7 @@ export default function ContractDetailPage() {
   );
 }
 
-function InfoItem({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
+function InfoItem({ icon: Icon, label, value }: { icon: LooseValue; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
       <div className="p-2 rounded-lg bg-primary/5 border border-primary/10 text-primary shrink-0 mt-0.5">

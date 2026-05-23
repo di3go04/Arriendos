@@ -1,0 +1,9 @@
+{
+  "menu": { "home": "Home", "about": "About", "contact": "Contact" },
+  "hero": {
+    "title": "Welcome to Our Platform",
+    "description": "Discover innovative solutions for your business.",
+    "ctaPrimary": "Get Started",
+    "ctaSecondary": "Learn More"
+  }
+}

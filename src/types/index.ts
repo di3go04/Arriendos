@@ -10,6 +10,8 @@ export interface Profile {
   created_at: string;
 }
 
+export type PropertyInsert = Omit<Property, 'id' | 'owner_id' | 'created_at'>;
+
 export interface Property {
   id: string;
   owner_id: string;
@@ -34,9 +36,10 @@ export interface ContractTemplate {
   id: string;
   owner_id: string | null;
   name: string;
-  content: string; // HTML body with placeholders {{variable}}
+  content: string; // HTML body with placeholders {{variable}} or spans with data-campo
   variables: string[]; // List of placeholder tags
   is_public: boolean;
+  tipo: string; // 'manual' | 'ai'
   created_at: string;
 }
 
@@ -82,6 +85,9 @@ export interface Payment {
   payment_method: string | null;
   receipt_url: string | null;
   month_year: string | null;
+  status: string | null;
+  stripe_payment_id: string | null;
+  notes: string | null;
   created_at: string;
 
   // Joins
@@ -107,12 +113,26 @@ export interface MaintenanceIssue {
   user?: Profile;
 }
 
+export type NotificationType =
+  | 'pago_proximo'
+  | 'pago_vencido'
+  | 'pago_validado'
+  | 'pago_registrado'
+  | 'contrato_pendiente_firma'
+  | 'contrato_firmado'
+  | 'contrato_proximo_vencer'
+  | 'contrato_vencido'
+  | 'info'
+  | 'warning'
+  | 'success'
+  | 'danger';
+
 export interface Notification {
   id: string;
   user_id: string;
   title: string | null;
   message: string | null;
-  type: string | null;
+  type: NotificationType | null;
   read: boolean;
   contract_id: string | null;
   created_at: string;

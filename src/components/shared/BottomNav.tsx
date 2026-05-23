@@ -1,14 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
-  LayoutDashboard, Building2, DollarSign, Menu, X,
-  Users, FileText, Wrench, Settings, LogOut,
-  User as UserIcon, FileCode
+Building2,DollarSign,
+FileCode,
+FileText,
+LayoutDashboard,
+LogOut,
+Menu,
+Settings,
+Tag,
+User as UserIcon,
+Users,
+Wrench,
+X
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -35,10 +44,12 @@ export default function BottomNav() {
         { name: 'Plantillas', href: '/templates', icon: FileCode },
         { name: 'Contratos', href: '/dashboard/leases', icon: FileText },
         { name: 'Incidencias', href: '/dashboard/maintenance', icon: Wrench },
+        { name: 'Precios', href: '/precios', icon: Tag },
         { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
       ]
     : [
         { name: 'Reportar Daño', href: '/dashboard/maintenance', icon: Wrench },
+        { name: 'Precios', href: '/precios', icon: Tag },
         { name: 'Configuración', href: '/dashboard/settings', icon: Settings },
       ];
 

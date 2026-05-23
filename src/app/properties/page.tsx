@@ -1,19 +1,37 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import BackToHome from '@/components/shared/BackToHome';
 import { useAuth } from '@/context/AuthContext';
+import { createPropertyAction } from '@/lib/actions/properties.actions';
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/types';
+import confetti from 'canvas-confetti';
 import {
-  Building2, Plus, Search, MapPin, Home, CheckCircle2,
-  AlertTriangle, Wrench, X, Loader2, BedDouble, Bath,
-  Maximize2, DollarSign, Calendar, Layers, Image as ImageIcon,
-  ArrowRight, EyeOff, TrendingUp, Grid3X3, List,
-  Camera, Sparkles, SlidersHorizontal, AppWindow,
-  Warehouse, Store, Briefcase, TreePine
+AlertTriangle,
+AppWindow,
+ArrowRight,
+Bath,
+BedDouble,
+Briefcase,
+Building2,
+Camera,
+CheckCircle2,
+EyeOff,
+Grid3X3,
+Home,
+Image as ImageIcon,
+List,
+Loader2,
+MapPin,
+Maximize2,
+Plus,Search,
+Sparkles,
+Store,
+TreePine,
+Wrench,X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import confetti from 'canvas-confetti';
+import React,{ useEffect,useRef,useState } from 'react';
 
 const AMENITIES_LIST = [
   'Wifi', 'Parqueadero', 'Piscina', 'Gimnasio',
@@ -164,37 +182,46 @@ export default function PropertiesPage() {
     return urls;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setIsSubmitting(true);
-    setErrorMsg('');
-    try {
-      const uploadedImageUrls = await uploadImagesToStorage();
-      const payload = {
-        owner_id: user.id, title, type,
-        address: address || null, city: city || null,
-        area_sqm: areaSqm ? Number(areaSqm) : null,
-        bedrooms: bedrooms ? Number(bedrooms) : null,
-        bathrooms: bathrooms ? Number(bathrooms) : null,
-        monthly_rent: monthlyRent ? Number(monthlyRent) : 0,
-        deposit: deposit ? Number(deposit) : 0,
-        available_from: availableFrom || null, status,
-        description: description || null,
-        amenities: selectedAmenities, image_urls: uploadedImageUrls
-      };
-      const { error } = await supabase.from('properties').insert(payload);
-      if (error) throw error;
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      setIsModalOpen(false);
-      fetchProperties();
-    } catch (err: any) {
-      console.error('Error saving property:', err);
-      setErrorMsg(err.message || 'Hubo un problema al guardar la propiedad.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!user) return;
+     setIsSubmitting(true);
+     setErrorMsg('');
+     try {
+       const uploadedImageUrls = await uploadImagesToStorage();
+       const payload = {
+         title,
+         type,
+         address: address || null,
+         city: city || null,
+         area_sqm: areaSqm ? Number(areaSqm) : null,
+         bedrooms: bedrooms ? Number(bedrooms) : null,
+         bathrooms: bathrooms ? Number(bathrooms) : null,
+         monthly_rent: monthlyRent ? Number(monthlyRent) : 0,
+         deposit: deposit ? Number(deposit) : 0,
+         available_from: availableFrom || null,
+         status,
+         description: description || null,
+         amenities: selectedAmenities,
+         image_urls: uploadedImageUrls
+       };
+       
+       const result = await createPropertyAction(payload);
+       
+       if (!result.success) {
+         throw new Error(result.error);
+       }
+       
+       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+       setIsModalOpen(false);
+       fetchProperties();
+     } catch (err: unknown) {
+       console.error('Error saving property:', err);
+       setErrorMsg((err as { message?: string }).message || 'Hubo un problema al guardar la propiedad.');
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
   const filteredProperties = properties.filter(prop => {
     const q = searchQuery.toLowerCase();
@@ -217,28 +244,32 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6 pb-24 animate-fade-in">
+      {/* Botón volver al inicio */}
+      <div className="mb-2">
+        <BackToHome />
+      </div>
 
       {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-card border-none shadow-card p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-[20px] bg-card border border-border shadow-card p-6 md:p-8">
         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-ink-secondary uppercase tracking-widest">
               <AppWindow className="w-3.5 h-3.5 text-primary" />
               Panel de Inmuebles
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight flex items-center gap-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Mis Propiedades
-              <span className="text-sm font-bold text-foreground bg-muted border-none px-3 py-1 rounded-full tabular-nums">
+              <span className="text-sm font-bold text-foreground bg-muted border border-border-subtle px-3 py-1 rounded-full tabular-nums">
                 {properties.length}
               </span>
             </h1>
-            <p className="text-sm text-ink-muted max-w-xl">
+            <p className="text-sm text-muted-foreground max-w-xl font-medium">
               Gestiona tu portafolio de inmuebles. Añade, edita y supervisa cada propiedad desde un solo lugar.
             </p>
           </div>
           <button
             onClick={handleOpenCreateModal}
-            className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all active:scale-95 cursor-pointer"
+            className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4.5 h-4.5 transition-transform group-hover:rotate-90" />
             <span>Nueva Propiedad</span>
@@ -246,45 +277,37 @@ export default function PropertiesPage() {
         </div>
 
         {/* Mini Stats Row */}
-        <div className="grid grid-cols-3 md:grid-cols-3 gap-3 mt-6 pt-6 border-t border-border/50">
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mt-6 pt-6 border-t border-border/50">
           {[
             { label: 'Disponibles', value: stats.available, color: 'text-success', bg: 'bg-success/10 border-success/20' },
             { label: 'Alquiladas', value: stats.occupied, color: 'text-primary', bg: 'bg-primary/10 border-primary/20' },
             { label: 'Mantenimiento', value: stats.maintenance, color: 'text-warning', bg: 'bg-warning/10 border-warning/20' },
-          ].map((s, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card/40 border border-border/40 backdrop-blur-sm">
+            { label: 'Total', value: stats.total, color: 'text-brand', bg: 'bg-brand/10 border-brand/20' },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-card/80 border border-border/40 backdrop-blur-sm">
               <div className={`p-2 rounded-lg ${s.bg}`}>
                 <div className={`w-2 h-2 rounded-full ${s.color} bg-current`} />
               </div>
               <div>
-                <span className="block text-lg font-black text-foreground">{s.value}</span>
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{s.label}</span>
+                <span className="block text-lg font-black text-foreground tabular-nums">{s.value}</span>
+                <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-wider">{s.label}</span>
               </div>
             </div>
           ))}
-          <div className="hidden md:flex items-center gap-3 p-3 rounded-xl bg-card/40 border border-border/40 backdrop-blur-sm md:col-span-1">
-            <div className="p-2 rounded-lg bg-accent/10 border border-accent/20">
-              <TrendingUp className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <span className="block text-lg font-black text-foreground">{stats.total}</span>
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Total</span>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-card border-none rounded-2xl p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+      <div className="bg-card border border-border rounded-[16px] p-4 shadow-card">
         <div className="flex flex-col xl:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por título, dirección o ciudad..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-background border-none text-foreground text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-ink-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
+              className="w-full bg-muted border border-border text-foreground text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
             />
           </div>
           <div className="flex flex-col md:flex-row gap-3 overflow-hidden">
@@ -301,10 +324,10 @@ export default function PropertiesPage() {
                 <button
                   key={ft.id}
                   onClick={() => setFilterType(ft.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border border-border ${
                     filterType === ft.id
-                      ? 'bg-foreground text-background shadow-btn'
-                      : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
+                      ? 'bg-foreground text-white shadow-[0_2px_8px_rgba(26,32,44,0.2)]'
+                      : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   {ft.label}
@@ -324,10 +347,10 @@ export default function PropertiesPage() {
                 <button
                   key={fs.id}
                   onClick={() => setFilterStatus(fs.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border-none ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 border border-border ${
                     filterStatus === fs.id
-                      ? 'bg-primary text-primary-foreground shadow-btn'
-                      : 'bg-background text-ink-muted hover:bg-muted hover:text-foreground'
+                      ? 'bg-primary text-white shadow-btn'
+                      : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   {fs.label}
@@ -335,16 +358,16 @@ export default function PropertiesPage() {
               ))}
             </div>
 
-            <div className="flex bg-background rounded-xl border-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] overflow-hidden shrink-0">
+            <div className="flex bg-muted rounded-xl border border-border overflow-hidden shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-ink-muted hover:text-foreground'}`}
+                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-ink-muted hover:text-foreground'}`}
+                className={`p-2.5 transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -357,7 +380,7 @@ export default function PropertiesPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden animate-pulse">
+            <div key={i} className="bg-card border border-border rounded-[16px] overflow-hidden animate-pulse">
               <div className="h-48 bg-muted" />
               <div className="p-5 space-y-3">
                 <div className="h-4 bg-muted rounded w-3/4" />
@@ -376,14 +399,14 @@ export default function PropertiesPage() {
         /* Empty State */
         <div className="py-20 text-center max-w-lg mx-auto space-y-6">
           <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-brand/20 rounded-full blur-xl" />
             <div className="relative p-5 bg-card border border-border rounded-full">
               <Home className="w-14 h-14 text-muted-foreground/60" />
             </div>
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-black text-foreground">No hay propiedades aún</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-ink-secondary leading-relaxed font-medium">
               {searchQuery || filterType !== 'all' || filterStatus !== 'all'
                 ? 'Ninguna propiedad coincide con los filtros aplicados. Intenta con otros criterios.'
                 : 'Comienza añadiendo tu primera propiedad para empezar a gestionar tus alquileres.'}
@@ -392,7 +415,7 @@ export default function PropertiesPage() {
           {!searchQuery && filterType === 'all' && filterStatus === 'all' && (
             <button
               onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all cursor-pointer active:scale-98"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4" />
               Añadir Primera Propiedad
@@ -408,7 +431,7 @@ export default function PropertiesPage() {
               <div
                 key={prop.id}
                 onClick={() => router.push(`/properties/${prop.id}`)}
-                className={`group bg-card border-none rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col relative cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                className={`group bg-card border border-border rounded-[16px] overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col relative cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transitionDelay: `${index * 60}ms` }}
               >
                 {/* Image */}
@@ -423,7 +446,7 @@ export default function PropertiesPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     </>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-ink-muted/40 gap-2 bg-muted/50 border-none">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/40 gap-2 bg-muted/50">
                       <Camera className="w-10 h-10" />
                       <span className="text-[9px] uppercase font-bold tracking-widest">Sin foto</span>
                     </div>
@@ -433,14 +456,14 @@ export default function PropertiesPage() {
                   <div className="absolute top-3 left-3 flex gap-1.5">
                     {statusBadge(prop.status)}
                   </div>
-                  <div className="absolute top-3 right-3 bg-black/60 border-none text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                  <div className="absolute top-3 right-3 bg-black/60 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                     <Icon className="w-3 h-3" />
                     {typeLabel(prop.type)}
                   </div>
 
                   {/* Image count */}
                   {prop.image_urls && prop.image_urls.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 border-none shadow-sm">
+                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
                       <ImageIcon className="w-3 h-3" />
                       {prop.image_urls.length}
                     </div>
@@ -457,32 +480,32 @@ export default function PropertiesPage() {
                       <span className="text-lg font-black text-primary tabular-nums">
                         ${prop.monthly_rent?.toLocaleString('es-CO')}
                       </span>
-                      <span className="text-[10px] font-semibold text-ink-muted">/mes</span>
+                      <span className="text-[10px] font-semibold text-muted-foreground">/mes</span>
                     </div>
-                    <p className="text-xs text-ink-muted flex items-start gap-1.5 pt-0.5">
+                    <p className="text-xs text-muted-foreground flex items-start gap-1.5 pt-0.5">
                       <MapPin className="w-3.5 h-3.5 mt-0.5 text-primary shrink-0" />
                       <span className="line-clamp-1">{prop.address}{prop.city ? `, ${prop.city}` : ''}</span>
                     </p>
                   </div>
 
                   {/* Specs */}
-                  <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-border/40 text-[10px] font-bold text-muted-foreground">
-                    <div className="flex items-center gap-1.5 bg-muted/30 rounded-lg p-1.5">
+                  <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-border/40 text-[10px] font-bold text-ink-secondary">
+                    <div className="flex items-center gap-1.5 bg-muted rounded-lg p-1.5">
                       <BedDouble className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{prop.bedrooms || 0} Hab</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-muted/30 rounded-lg p-1.5">
+                    <div className="flex items-center gap-1.5 bg-muted rounded-lg p-1.5">
                       <Bath className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{prop.bathrooms || 0} Baños</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-muted/30 rounded-lg p-1.5">
+                    <div className="flex items-center gap-1.5 bg-muted rounded-lg p-1.5">
                       <Maximize2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{prop.area_sqm || 0} m²</span>
                     </div>
                   </div>
 
                   {prop.description && (
-                    <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2 font-medium">
+                    <p className="text-[11px] text-ink-secondary leading-relaxed line-clamp-2 font-medium">
                       {prop.description}
                     </p>
                   )}
@@ -504,14 +527,14 @@ export default function PropertiesPage() {
               <div
               key={prop.id}
               onClick={() => router.push(`/properties/${prop.id}`)}
-              className={`group bg-card border-none rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-all duration-300 flex items-center gap-4 cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              className={`group bg-card border border-border rounded-[16px] p-4 shadow-card hover:shadow-card-hover transition-all duration-300 flex items-center gap-4 cursor-pointer ${animateCards ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
               style={{ transitionDelay: `${index * 50}ms` }}
             >
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-muted">
                 {prop.image_urls?.[0] ? (
                   <img src={prop.image_urls[0]} alt={prop.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-ink-muted/30 border-none bg-muted/50">
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 bg-muted/50">
                     <Camera className="w-6 h-6" />
                   </div>
                 )}
@@ -521,18 +544,18 @@ export default function PropertiesPage() {
                   <h3 className="font-extrabold text-sm text-foreground truncate group-hover:text-primary transition-colors">{prop.title}</h3>
                   {statusBadge(prop.status)}
                 </div>
-                <p className="text-xs text-ink-muted truncate flex items-center gap-1">
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                   <MapPin className="w-3 h-3 shrink-0 text-primary" />
                   {prop.address}{prop.city ? `, ${prop.city}` : ''}
                 </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-ink-muted tabular-nums">
+                <div className="flex items-center gap-3 mt-1.5 text-[10px] font-bold text-muted-foreground tabular-nums">
                   <span className="text-primary font-black text-sm">${prop.monthly_rent?.toLocaleString('es-CO')}/mes</span>
                   <span className="flex items-center gap-1"><BedDouble className="w-3 h-3" />{prop.bedrooms || 0}</span>
                   <span className="flex items-center gap-1"><Bath className="w-3 h-3" />{prop.bathrooms || 0}</span>
                   <span className="flex items-center gap-1"><Maximize2 className="w-3 h-3" />{prop.area_sqm || 0}m²</span>
                 </div>
               </div>
-              <ArrowRight className="w-5 h-5 text-ink-muted group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+              <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
             </div>
           ))}
         </div>
@@ -542,17 +565,17 @@ export default function PropertiesPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
           <div onClick={() => setIsModalOpen(false)} className="absolute inset-0" />
-          <div className="relative bg-card border-none rounded-3xl w-full max-w-2xl shadow-modal overflow-hidden animate-scale-up my-8">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
+          <div className="relative bg-card border border-border rounded-[18px] w-full max-w-2xl shadow-modal overflow-hidden animate-scale-up my-8">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand to-primary" />
 
             <div className="p-6 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
+                <div className="p-2.5 rounded-xl bg-primary-subtle border border-primary/20">
                   <TypeIcon className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-lg text-foreground">Nueva Propiedad</h3>
-                  <p className="text-[11px] text-muted-foreground font-medium">Completa los datos del inmueble</p>
+                  <h3 className="font-extrabold text-lg text-foreground" style={{ fontFamily: 'Poppins, sans-serif' }}>Nueva Propiedad</h3>
+                  <p className="text-[11px] text-ink-secondary font-medium">Completa los datos del inmueble</p>
                 </div>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer">
@@ -577,15 +600,15 @@ export default function PropertiesPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Título *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Título *</label>
                     <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)}
                       placeholder="Ej: Apartamento Penthouse con Terraza"
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Tipo *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Tipo *</label>
                     <div className="relative">
-                      <select value={type} onChange={(e: any) => setType(e.target.value)}
+                      <select value={type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setType(e.target.value as Property['type'])}
                         className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none appearance-none cursor-pointer font-semibold">
                         <option value="apartamento">Apartamento</option>
                         <option value="casa">Casa</option>
@@ -596,8 +619,8 @@ export default function PropertiesPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Estado</label>
-                    <select value={status} onChange={(e: any) => setStatus(e.target.value)}
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Estado</label>
+                    <select value={status} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatus(e.target.value as Property['status'])}
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none appearance-none cursor-pointer font-semibold">
                       <option value="disponible">Disponible</option>
                       <option value="ocupado">Alquilada</option>
@@ -609,13 +632,13 @@ export default function PropertiesPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Dirección *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Dirección *</label>
                     <input type="text" required value={address} onChange={(e) => setAddress(e.target.value)}
                       placeholder="Calle 10 # 34-12"
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Ciudad *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Ciudad *</label>
                     <input type="text" required value={city} onChange={(e) => setCity(e.target.value)}
                       placeholder="Envigado"
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all" />
@@ -626,27 +649,27 @@ export default function PropertiesPage() {
               {/* Pricing & Dates */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
-                  <div className="w-1 h-4 rounded-full bg-accent" />
+                  <div className="w-1 h-4 rounded-full bg-primary" />
                   Renta y Fechas
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Renta Mensual ($) *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Renta Mensual ($) *</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary font-bold text-sm">$</span>
                       <input type="number" required min="0" value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)}
                         placeholder="1,200,000"
                         className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary pl-8 pr-3 py-3 outline-none transition-all font-bold" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Depósito ($) *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Depósito ($) *</label>
                     <input type="number" required min="0" value={deposit} onChange={(e) => setDeposit(e.target.value)}
                       placeholder="1,200,000"
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all font-bold" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5">Disponible Desde *</label>
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5">Disponible Desde *</label>
                     <input type="date" required value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)}
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all cursor-pointer" />
                   </div>
@@ -656,12 +679,12 @@ export default function PropertiesPage() {
               {/* Distribution */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
-                  <div className="w-1 h-4 rounded-full bg-success" />
+                  <div className="w-1 h-4 rounded-full bg-primary" />
                   Distribución
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5 flex items-center gap-1.5">
                       <BedDouble className="w-3.5 h-3.5 text-primary" /> Habitaciones
                     </label>
                     <input type="number" min="0" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)}
@@ -669,7 +692,7 @@ export default function PropertiesPage() {
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5 flex items-center gap-1.5">
                       <Bath className="w-3.5 h-3.5 text-primary" /> Baños
                     </label>
                     <input type="number" min="0" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)}
@@ -677,7 +700,7 @@ export default function PropertiesPage() {
                       className="w-full bg-muted border border-border text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary p-3 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <label className="block text-xs font-bold text-ink-secondary mb-1.5 flex items-center gap-1.5">
                       <Maximize2 className="w-3.5 h-3.5 text-primary" /> Área (m²)
                     </label>
                     <input type="number" min="0" value={areaSqm} onChange={(e) => setAreaSqm(e.target.value)}
@@ -686,7 +709,7 @@ export default function PropertiesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground mb-1.5">Descripción</label>
+                  <label className="block text-xs font-bold text-ink-secondary mb-1.5">Descripción</label>
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)}
                     placeholder="Excelente iluminación, balcón amplio y acabados de lujo..."
                     rows={3}
@@ -697,7 +720,7 @@ export default function PropertiesPage() {
               {/* Amenities */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary">
-                  <div className="w-1 h-4 rounded-full bg-accent" />
+                  <div className="w-1 h-4 rounded-full bg-primary" />
                   Amenities
                 </div>
                 <div>
@@ -715,8 +738,8 @@ export default function PropertiesPage() {
                         <button key={amenity} type="button" onClick={() => toggleAmenity(amenity)}
                           className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-primary text-primary-foreground border-primary shadow-sm scale-105'
-                              : 'bg-muted border-border text-muted-foreground hover:bg-muted/80 hover:border-primary/30'
+                              ? 'bg-primary text-white border-primary shadow-sm scale-105'
+                              : 'bg-muted border-border text-ink-secondary hover:bg-muted/80 hover:border-primary/30'
                           }`}>
                           {isSelected ? '✓ ' : '+ '}{amenity}
                         </button>
@@ -725,8 +748,8 @@ export default function PropertiesPage() {
                   </div>
                   {selectedAmenities.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-border/40 flex flex-wrap gap-1.5">
-                      {selectedAmenities.map((amenity, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold px-3 py-1 rounded-xl">
+                      {selectedAmenities.map((amenity) => (
+                        <span key={amenity} className="inline-flex items-center gap-1.5 bg-primary-subtle border border-primary/20 text-primary text-[11px] font-bold px-3 py-1 rounded-xl">
                           {amenity}
                           <button type="button" onClick={() => toggleAmenity(amenity)} className="text-primary hover:text-destructive cursor-pointer">
                             <X className="w-3 h-3" />
@@ -750,18 +773,18 @@ export default function PropertiesPage() {
                 >
                   <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleFileChange} className="hidden" />
                   <div className="space-y-2">
-                    <div className="p-3 rounded-full bg-muted inline-flex text-muted-foreground group-hover:text-primary transition-colors">
+                    <div className="p-3 rounded-full bg-muted inline-flex text-ink-secondary group-hover:text-primary transition-colors">
                       <Camera className="w-8 h-8" />
                     </div>
                     <p className="text-sm font-bold text-foreground">Subir fotos</p>
-                    <p className="text-[11px] text-muted-foreground">PNG, JPG, WEBP — hasta 10 imágenes</p>
+                    <p className="text-[11px] text-ink-secondary font-medium">PNG, JPG, WEBP — hasta 10 imágenes</p>
                   </div>
                 </div>
                 {previewUrls.length > 0 && (
                   <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                     {previewUrls.map((url, idx) => (
-                      <div key={idx} className="aspect-square rounded-xl relative overflow-hidden border border-border group/image bg-muted">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                      <div key={`${url}-${idx}`} className="aspect-square rounded-xl relative overflow-hidden border border-border group/image bg-muted">
+                        <img src={url} alt={`Vista previa ${idx + 1}`} className="w-full h-full object-cover" />
                         <button type="button" onClick={() => handleRemoveSelectedFile(idx)}
                           className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-destructive rounded-lg text-white opacity-0 group-hover/image:opacity-100 transition-all cursor-pointer">
                           <X className="w-3 h-3" />
@@ -775,11 +798,11 @@ export default function PropertiesPage() {
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <button type="button" onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-border hover:bg-muted text-xs font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer">
+                  className="px-5 py-2.5 rounded-xl border border-border hover:bg-muted text-xs font-bold text-ink-secondary hover:text-foreground transition-all cursor-pointer">
                   Cancelar
                 </button>
                 <button type="submit" disabled={isSubmitting || uploadingImages}
-                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer">
+                  className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer">
                   {isSubmitting || uploadingImages ? (
                     <><Loader2 className="w-3.5 h-3.5 animate-spin" />{uploadingImages ? 'Subiendo fotos...' : 'Guardando...'}</>
                   ) : (
@@ -795,7 +818,7 @@ export default function PropertiesPage() {
       {/* FAB for mobile */}
       <button
         onClick={handleOpenCreateModal}
-        className="fixed bottom-6 right-6 md:hidden bg-primary hover:bg-primary/90 text-primary-foreground p-4 rounded-full shadow-2xl shadow-primary/30 hover:shadow-primary/40 transition-all active:scale-90 z-40 cursor-pointer"
+        className="fixed bottom-6 right-6 md:hidden bg-primary hover:bg-primary-hover text-white p-4 rounded-full shadow-2xl shadow-primary/30 hover:shadow-primary/40 transition-all active:scale-90 z-40 cursor-pointer"
       >
         <Plus className="w-6 h-6" />
       </button>
@@ -806,13 +829,13 @@ export default function PropertiesPage() {
 function statusBadge(s: Property['status']) {
   switch (s) {
     case 'disponible':
-      return <span className="inline-flex items-center gap-1 bg-success/10 border-none text-success text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><CheckCircle2 className="w-3 h-3" /> Disponible</span>;
+      return <span className="inline-flex items-center gap-1 bg-success/10 border border-success/20 text-success text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><CheckCircle2 className="w-3 h-3" /> Disponible</span>;
     case 'ocupado':
-      return <span className="inline-flex items-center gap-1 bg-primary/10 border-none text-primary text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Building2 className="w-3 h-3" /> Alquilada</span>;
+      return <span className="inline-flex items-center gap-1 bg-primary/10 border border-primary/20 text-primary text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Building2 className="w-3 h-3" /> Alquilada</span>;
     case 'mantenimiento':
-      return <span className="inline-flex items-center gap-1 bg-warning/10 border-none text-warning text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Wrench className="w-3 h-3" /> Mantenimiento</span>;
+      return <span className="inline-flex items-center gap-1 bg-warning/10 border border-warning/20 text-warning text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><Wrench className="w-3 h-3" /> Mantenimiento</span>;
     case 'inactivo':
-      return <span className="inline-flex items-center gap-1 bg-destructive/10 border-none text-destructive text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><EyeOff className="w-3 h-3" /> Inactivo</span>;
+      return <span className="inline-flex items-center gap-1 bg-destructive/10 border border-destructive/20 text-destructive text-[9px] font-bold px-2 py-0.5 rounded shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"><EyeOff className="w-3 h-3" /> Inactivo</span>;
     default:
       return null;
   }

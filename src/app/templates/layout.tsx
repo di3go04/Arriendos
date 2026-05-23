@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import Sidebar from '@/components/shared/Sidebar';
-import Navbar from '@/components/shared/Navbar';
 import BottomNav from '@/components/shared/BottomNav';
+import Navbar from '@/components/shared/Navbar';
+import Sidebar from '@/components/shared/Sidebar';
+import { useAuth } from '@/context/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React,{ useEffect,useState } from 'react';
 
 export default function TemplatesLayout({
   children,

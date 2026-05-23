@@ -1,25 +1,36 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { usePayments, formatCOP, getPaymentStatus, PAYMENT_METHODS, STATUS_OPTS } from './usePayments';
-import {
-  DollarSign, CheckCircle2, Clock, AlertTriangle, Search,
-  X, Loader2, UploadCloud, ExternalLink, Coins, TrendingUp,
-  Eye, Building2, User, Filter, ChevronDown, Receipt
-} from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { useToast } from '@/components/ui/Toast';
+import { useAuth } from '@/context/AuthContext';
+import { formatCOP } from '@/lib/format';
+import { supabase } from '@/lib/supabase';
+import { format,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+AlertTriangle,
+CheckCircle2,
+ChevronDown,
+Clock,
+Coins,
+Eye,
+Filter,
+Loader2,
+Receipt,
+Search,
+TrendingUp,
+UploadCloud,
+X
+} from 'lucide-react';
+import { useRef,useState } from 'react';
+import { getPaymentStatus,PAYMENT_METHODS,STATUS_OPTS,usePayments } from './usePayments';
 
 export default function PaymentsPage() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   
   const {
-    payments, filtered, contracts, properties, loading, error, isLandlord, today, totals, fetchData,
+    filtered, contracts, properties, loading, isLandlord, today, totals, fetchData,
     search, setSearch, filterPropertyId, setFilterPropertyId, filterContractId, setFilterContractId,
     filterStatus, setFilterStatus, filterDateFrom, setFilterDateFrom, filterDateTo, setFilterDateTo,
   } = usePayments(user, profile);
@@ -29,14 +40,14 @@ export default function PaymentsPage() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
   // Reconcile state
-  const [reconcilePayment, setReconcilePayment] = useState<any | null>(null);
+  const [reconcilePayment, setReconcilePayment] = useState<LooseRecord | null>(null);
   const [reconcileDate, setReconcileDate] = useState('');
   const [reconcileMethod, setReconcileMethod] = useState('Efectivo');
   const [reconcileNotes, setReconcileNotes] = useState('');
   const [reconciling, setReconciling] = useState(false);
 
   // Register state
-  const [registerPayment, setRegisterPayment] = useState<any | null>(null);
+  const [registerPayment, setRegisterPayment] = useState<LooseRecord | null>(null);
   const [registerMethod, setRegisterMethod] = useState('Transferencia Bancaria');
   const [registerFile, setRegisterFile] = useState<File | null>(null);
   const [registerUploading, setRegisterUploading] = useState(false);
@@ -123,7 +134,7 @@ export default function PaymentsPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-24">
       {successMsg && (
-        <div className="fixed top-20 right-6 z-50 bg-success text-success-foreground px-4 py-3 rounded-lg shadow-modal text-xs font-semibold flex items-center gap-2 animate-slide-in-right">
+        <div className="fixed top-20 right-6 z-50 bg-success text-success-foreground px-4 py-3 rounded-lg shadow-[0_25px_50px_rgba(0,0,0,0.15)] text-xs font-semibold flex items-center gap-2 animate-slide-in-right">
           <CheckCircle2 className="w-4 h-4" /> {successMsg}
         </div>
       )}
@@ -139,7 +150,7 @@ export default function PaymentsPage() {
 
       {isLandlord && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+          <div className="bg-card border-none rounded-xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col justify-between group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Cobrado</span>
               <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -151,7 +162,7 @@ export default function PaymentsPage() {
               <span className="text-[11px] font-semibold text-ink-muted mt-1">Total recibido</span>
             </div>
           </div>
-          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+          <div className="bg-card border-none rounded-xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col justify-between group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Pendiente</span>
               <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -163,7 +174,7 @@ export default function PaymentsPage() {
               <span className="text-[11px] font-semibold text-ink-muted mt-1">Por cobrar</span>
             </div>
           </div>
-          <div className="bg-card border-none rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
+          <div className="bg-card border-none rounded-xl p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col justify-between group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[11px] font-bold text-ink-secondary uppercase tracking-wider">Morosidad</span>
               <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -178,14 +189,14 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-xl p-4 shadow-card">
+      <div className="bg-card border border-border rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted pointer-events-none" />
             <input id="payment-search" name="paymentSearch"
               type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder={isLandlord ? 'Buscar por inquilino, propiedad...' : 'Buscar por propiedad...'}
-              className="w-full bg-background border border-border text-foreground text-xs rounded-lg pl-9 p-2.5 outline-none focus:ring-1 focus:ring-ring focus:border-ring"
+              className="w-full bg-card border border-border text-foreground text-xs rounded-lg pl-9 p-2.5 outline-none focus:ring-1 focus:ring-ring focus:border-ring"
             />
           </div>
 
@@ -196,11 +207,11 @@ export default function PaymentsPage() {
           <div className={`${showMobileFilters ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-2`}>
             {isLandlord && (
               <>
-                <select value={filterPropertyId} onChange={e => { setFilterPropertyId(e.target.value); setFilterContractId('all'); }} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
+                <select value={filterPropertyId} onChange={e => { setFilterPropertyId(e.target.value); setFilterContractId('all'); }} className="bg-card border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
                   <option value="all">Todas las propiedades</option>
                   {properties.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
-                <select value={filterContractId} onChange={e => setFilterContractId(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
+                <select value={filterContractId} onChange={e => setFilterContractId(e.target.value)} className="bg-card border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring">
                   <option value="all">Todos los contratos</option>
                   {contracts.map(c => <option key={c.id} value={c.id}>#{c.contract_number || c.id.slice(0, 8)}</option>)}
                 </select>
@@ -213,30 +224,30 @@ export default function PaymentsPage() {
                   onClick={() => setFilterStatus(o.value)}
                   className={`snap-center shrink-0 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 ${
                     filterStatus === o.value
-                      ? 'bg-primary text-primary-foreground shadow-btn scale-100'
-                      : 'bg-transparent text-ink-muted hover:text-foreground hover:bg-background/50 scale-95 hover:scale-100'
+                      ? 'bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(37,99,235,0.2)] scale-100'
+                      : 'bg-transparent text-ink-muted hover:text-foreground hover:bg-card/50 scale-95 hover:scale-100'
                   }`}
                 >
                   {o.label}
                 </button>
               ))}
             </div>
-            <input id="filter-date-from" name="filterDateFrom" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Desde" />
-            <input id="filter-date-to" name="filterDateTo" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="bg-background border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Hasta" />
+            <input id="filter-date-from" name="filterDateFrom" type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="bg-card border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Desde" />
+            <input id="filter-date-to" name="filterDateTo" type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="bg-card border border-border text-foreground text-xs font-medium rounded-lg p-2.5 outline-none focus:ring-1 focus:ring-ring" title="Hasta" />
           </div>
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="py-24 text-center bg-muted/30 border border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl flex flex-col items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)] flex items-center justify-center mb-5">
             <Receipt className="w-8 h-8 text-ink-muted" />
           </div>
           <h3 className="font-bold text-base text-foreground">No hay pagos</h3>
           <p className="text-xs text-ink-muted mt-1.5 font-medium">No se encontraron registros financieros con los filtros actuales.</p>
         </div>
       ) : (
-        <div className="bg-card border-none rounded-xl overflow-hidden shadow-card">
+        <div className="bg-card border-none rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.04)]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
@@ -286,7 +297,7 @@ export default function PaymentsPage() {
                       <td className="px-5 py-4 text-right">
                         {isLandlord && !p.paid ? (
                           <button onClick={() => { setReconcilePayment(p); setReconcileDate(format(today, 'yyyy-MM-dd')); setReconcileMethod('Efectivo'); setReconcileNotes(''); }}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${p.receipt_url ? 'bg-primary text-primary-foreground hover:bg-primary-hover shadow-btn' : 'bg-success/10 border border-success/20 text-success hover:bg-success hover:text-success-foreground'}`}>
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${p.receipt_url ? 'bg-primary text-primary-foreground hover:bg-primary-hover shadow-[0_2px_8px_rgba(37,99,235,0.2)]' : 'bg-success/10 border border-success/20 text-success hover:bg-success hover:text-success-foreground'}`}>
                             <Coins className="w-3.5 h-3.5" /> {p.receipt_url ? 'Validar recibo' : 'Marcar pagado'}
                           </button>
                         ) : !isLandlord && !p.paid && !p.receipt_url ? (
@@ -310,7 +321,7 @@ export default function PaymentsPage() {
       {/* Modals go here, same logic but styled with standard variables */}
       {reconcilePayment && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setReconcilePayment(null)}>
-          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-[0_25px_50px_rgba(0,0,0,0.15)] animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <h3 className="font-bold text-base text-foreground flex items-center gap-2">
                 <Coins className="w-4 h-4 text-success" /> Validar Pago
@@ -330,22 +341,22 @@ export default function PaymentsPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Fecha de pago</label>
-                  <input id="reconcile-date" name="reconcileDate" type="date" value={reconcileDate} onChange={e => setReconcileDate(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" />
+                  <input id="reconcile-date" name="reconcileDate" type="date" value={reconcileDate} onChange={e => setReconcileDate(e.target.value)} className="w-full bg-card border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Método</label>
-                  <select value={reconcileMethod} onChange={e => setReconcileMethod(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
+                  <select value={reconcileMethod} onChange={e => setReconcileMethod(e.target.value)} className="w-full bg-card border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Notas (Opcional)</label>
-                  <textarea value={reconcileNotes} onChange={e => setReconcileNotes(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" rows={2} />
+                  <textarea value={reconcileNotes} onChange={e => setReconcileNotes(e.target.value)} className="w-full bg-card border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none" rows={2} />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button onClick={() => setReconcilePayment(null)} className="px-4 py-2 text-xs font-medium text-ink-secondary border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
-                <button onClick={handleReconcile} disabled={reconciling || !reconcileDate} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-btn hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
+                <button onClick={handleReconcile} disabled={reconciling || !reconcileDate} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-[0_2px_8px_rgba(37,99,235,0.2)] hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
                   {reconciling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Confirmar
                 </button>
               </div>
@@ -356,7 +367,7 @@ export default function PaymentsPage() {
 
       {registerPayment && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setRegisterPayment(null)}>
-          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-modal animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-xl w-full max-w-md shadow-[0_25px_50px_rgba(0,0,0,0.15)] animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <h3 className="font-bold text-base text-foreground flex items-center gap-2">
                 <UploadCloud className="w-4 h-4 text-primary" /> Registrar Pago
@@ -371,7 +382,7 @@ export default function PaymentsPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-ink-secondary uppercase mb-1">Método</label>
-                  <select value={registerMethod} onChange={e => setRegisterMethod(e.target.value)} className="w-full bg-background border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
+                  <select value={registerMethod} onChange={e => setRegisterMethod(e.target.value)} className="w-full bg-card border border-border rounded-md p-2 text-xs focus:ring-1 focus:ring-ring outline-none">
                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
@@ -396,7 +407,7 @@ export default function PaymentsPage() {
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button onClick={() => setRegisterPayment(null)} className="px-4 py-2 text-xs font-medium text-ink-secondary border border-border rounded-md hover:bg-muted transition-colors">Cancelar</button>
-                <button onClick={handleRegisterPayment} disabled={registerUploading || !registerFile} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-btn hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
+                <button onClick={handleRegisterPayment} disabled={registerUploading || !registerFile} className="px-4 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md shadow-[0_2px_8px_rgba(37,99,235,0.2)] hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2">
                   {registerUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5" />} Subir
                 </button>
               </div>

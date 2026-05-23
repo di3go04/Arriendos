@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { AnimatePresence,motion } from 'framer-motion';
+import { AlertCircle,CheckCircle2 } from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface SmartInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: string;

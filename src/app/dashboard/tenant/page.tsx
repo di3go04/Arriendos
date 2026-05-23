@@ -1,19 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Contract, Payment, Property, Profile } from '@/types';
-import {
-  FileSignature, FileText, Building2, DollarSign, Calendar,
-  CheckCircle2, AlertTriangle, ArrowRight, Loader2, Clock,
-  MapPin, User, ChevronRight, Home, CreditCard, Sparkles,
-  Ban, CircleCheckBig, Receipt, XCircle, TrendingUp
-} from 'lucide-react';
-import { format, parseISO, addMonths, getDaysInMonth } from 'date-fns';
+import { Contract,Payment,Profile,Property } from '@/types';
+import { format,parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+Building2,
+Calendar,
+CheckCircle2,
+ChevronRight,
+Clock,
+CreditCard,
+DollarSign,
+FileSignature,FileText,
+Loader2,
+MapPin,
+Sparkles,
+User
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect,useState } from 'react';
 
 interface ContractWithJoins extends Contract {
   property?: Property;
@@ -24,18 +33,15 @@ interface PaymentWithContract extends Omit<Payment, 'contract'> {
   contract?: Contract & { property?: Property };
 }
 
-
-function formatCOP(v: number) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
-}
+import { formatCOP } from '@/lib/format';
 
 function statusBadge(status: string) {
   const map: Record<string, { label: string; cls: string }> = {
-    pendiente_firma: { label: 'Pendiente de Firma', cls: 'bg-amber-500/15 border-amber-500/25 text-amber-500' },
-    activo: { label: 'Activo', cls: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-500' },
-    firmado: { label: 'Firmado', cls: 'bg-blue-500/15 border-blue-500/25 text-blue-500' },
-    finalizado: { label: 'Finalizado', cls: 'bg-muted border-border text-muted-foreground' },
-    cancelado: { label: 'Cancelado', cls: 'bg-rose-500/15 border-rose-500/25 text-rose-500' },
+    pendiente_firma: { label: 'Pendiente de Firma', cls: 'bg-amber-50 border-amber-200 text-amber-600' },
+    activo: { label: 'Activo', cls: 'bg-success/10 border-success/20 text-success' },
+    firmado: { label: 'Firmado', cls: 'bg-primary/10 border-primary/20 text-primary' },
+    finalizado: { label: 'Finalizado', cls: 'bg-muted border-border text-ink-muted' },
+    cancelado: { label: 'Cancelado', cls: 'bg-destructive/10 border-destructive/20 text-destructive' },
   };
   const s = map[status];
   return s ? <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${s.cls}`}>{s.label}</span> : null;
@@ -51,47 +57,29 @@ export default function TenantDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('[Tenant Page] useEffect triggered. user is:', user?.id);
     if (!user) return;
     const fetchData = async () => {
-      console.log('[Tenant Page] Starting fetchData...');
       setLoading(true);
       try {
-        // Fetch contracts where I'm the tenant
-        console.log('[Tenant Page] fetching contracts for tenant', user.id);
         const { data: contractsData, error: contractsErr } = await supabase
           .from('contracts')
-          .select(`
-            *,
-            property:properties (*),
-            landlord:profiles!contracts_landlord_id_fkey (*)
-          `)
+          .select('*, property:properties (*), landlord:profiles!contracts_landlord_id_fkey (*)')
           .eq('tenant_id', user.id)
           .order('created_at', { ascending: false });
         if (contractsErr) throw contractsErr;
-        console.log('[Tenant Page] contracts fetched:', contractsData?.length);
         setContracts(contractsData || []);
 
-        // Fetch my payments
-        console.log('[Tenant Page] fetching payments for tenant', user.id);
         const { data: paymentsData, error: paymentsErr } = await supabase
           .from('payments')
-          .select(`
-            *,
-            contract:contracts!inner (
-              property:properties (id, title, address, city)
-            )
-          `)
+          .select('*, contract:contracts!inner (property:properties (id, title, address, city))')
           .eq('tenant_id', user.id)
           .order('due_date', { ascending: false });
         if (paymentsErr) throw paymentsErr;
-        console.log('[Tenant Page] payments fetched:', paymentsData?.length);
         setPayments(paymentsData || []);
       } catch (err) {
-        console.error('[Tenant Page] Error fetching tenant data:', err);
+        console.error(err);
         toast({ type: 'error', message: 'Error al cargar datos del inquilino.' });
       } finally {
-        console.log('[Tenant Page] Setting loading to false');
         setLoading(false);
       }
     };
@@ -114,24 +102,29 @@ export default function TenantDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-xs font-semibold text-muted-foreground">Cargando tu panel...</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand to-primary flex items-center justify-center animate-pulse">
+          <span className="text-white font-bold text-xs">A</span>
+        </div>
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <p className="text-xs font-semibold text-ink-muted">Cargando panel...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12 animate-fade-in">
+    <div className="space-y-8 pb-12 animate-fade-in">
 
       {/* Hero */}
-      <div className="bg-card border-none shadow-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-[20px] p-6 md:p-8 shadow-card-hover">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand via-brand-light to-primary" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
         <div className="relative z-10">
-          <h2 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
-            <Home className="w-6 h-6 text-primary" />
+          <h2 className="text-2xl font-extrabold text-white flex items-center gap-2 tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <Sparkles className="w-6 h-6 text-blue-200" />
             ¡Hola, {profile?.full_name || 'Inquilino'}!
           </h2>
-          <p className="text-xs text-ink-muted mt-1.5 font-medium max-w-xl">
+          <p className="text-xs text-blue-100/80 mt-1.5 font-medium max-w-xl">
             Aquí puedes revisar tus contratos, realizar pagos y gestionar tu perfil como arrendatario.
           </p>
         </div>
@@ -140,21 +133,21 @@ export default function TenantDashboard() {
       {/* Pending signature alert */}
       {pendingContracts.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             <FileSignature className="w-4 h-4 text-warning" />
             Contratos pendientes de firma
           </h3>
           {pendingContracts.map(c => (
-            <div key={c.id} className="bg-card border-none shadow-card rounded-3xl p-6 relative overflow-hidden">
+            <div key={c.id} className="bg-card border border-border shadow-card rounded-[16px] p-6 relative overflow-hidden">
               <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-warning/10 border-none text-warning">
+                    <div className="p-2 rounded-xl bg-warning/10 border border-warning/20 text-warning">
                       <FileSignature className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-base text-foreground">Tienes un contrato pendiente de firma</h4>
-                      <p className="text-xs text-ink-muted mt-0.5">
+                      <h4 className="font-bold text-base text-foreground">Tienes un contrato pendiente de firma</h4>
+                      <p className="text-xs text-ink-secondary mt-0.5 font-medium">
                         {c.landlord?.full_name || 'El arrendador'} —{' '}
                         {c.property?.title || 'Propiedad'}{c.property?.city ? `, ${c.property.city}` : ''}
                       </p>
@@ -162,16 +155,16 @@ export default function TenantDashboard() {
                   </div>
                   <div className="flex items-center gap-4 text-xs text-ink-muted">
                     <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Inicia: {c.start_date ? format(parseISO(c.start_date), 'dd/MMM/yyyy', { locale: es }) : '—'}</span>
-                    <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-success" /> Renta: <span className="tabular-nums">{formatCOP(c.monthly_rent)}</span></span>
+                    <span className="flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-primary" /> Renta: <span className="tabular-nums">{formatCOP(c.monthly_rent)}</span></span>
                   </div>
                 </div>
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => router.push(`/contracts/${c.id}/sign`)}
-                  className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-bold rounded-xl shadow-btn hover:shadow-card-hover transition-all active:scale-95 cursor-pointer shrink-0"
                 >
                   <FileSignature className="w-4 h-4" />
                   Revisar y firmar
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -181,16 +174,16 @@ export default function TenantDashboard() {
       {/* Stats mini-row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {[
-          { label: 'Contratos Activos', value: activeContracts.length, icon: FileText, color: 'text-success', bg: 'bg-success/10' },
-          { label: 'Pendientes de Firma', value: pendingContracts.length, icon: FileSignature, color: 'text-warning', bg: 'bg-warning/10' },
-          { label: 'Pagos Realizados', value: payments.filter(p => p.paid).length, icon: CheckCircle2, color: 'text-primary', bg: 'bg-primary/10' },
-          { label: 'Próximos Pagos', value: payments.filter(p => !p.paid).length, icon: Clock, color: 'text-destructive', bg: 'bg-destructive/10' },
+          { label: 'Contratos Activos', value: activeContracts.length, icon: FileText, iconCls: 'text-brand', bgCls: 'bg-muted border-border' },
+          { label: 'Pendientes de Firma', value: pendingContracts.length, icon: FileSignature, iconCls: 'text-warning', bgCls: 'bg-warning/10 border-warning/20' },
+          { label: 'Pagos Realizados', value: payments.filter(p => p.paid).length, icon: CheckCircle2, iconCls: 'text-primary', bgCls: 'bg-primary-subtle border-primary/20' },
+          { label: 'Próximos Pagos', value: payments.filter(p => !p.paid).length, icon: Clock, iconCls: 'text-warning', bgCls: 'bg-warning/10 border-warning/20' },
         ].map((s, i) => (
-          <div key={i} className="bg-card border-none rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
-            <div className={`p-2.5 rounded-xl ${s.bg} ${s.color} w-fit mb-3`}>
+          <div key={i} className="bg-card border border-border rounded-[16px] p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
+            <div className={`p-2.5 rounded-xl ${s.bgCls} ${s.iconCls} w-fit mb-3`}>
               <s.icon className="w-4 h-4" />
             </div>
-            <span className="block text-3xl font-extrabold text-foreground tabular-nums">{s.value}</span>
+            <span className="block text-4xl font-bold tracking-tight text-foreground tabular-nums">{s.value}</span>
             <span className="block text-[10px] font-bold text-ink-secondary uppercase tracking-wider mt-1">{s.label}</span>
           </div>
         ))}
@@ -198,13 +191,13 @@ export default function TenantDashboard() {
 
       {/* Active contracts */}
       <div>
-        <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <FileText className="w-4 h-4 text-primary" />
           Mis Contratos Activos
         </h3>
         {activeContracts.length === 0 ? (
-          <div className="py-24 text-center bg-muted/30 border border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5">
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5 mx-auto">
               <FileText className="w-8 h-8 text-ink-muted" />
             </div>
             <h3 className="font-bold text-base text-foreground">No tienes contratos activos</h3>
@@ -215,22 +208,22 @@ export default function TenantDashboard() {
             {activeContracts.map(c => {
               const nextPmt = getNextPayment(c);
               return (
-                <div key={c.id} className="bg-card border-none rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all duration-300">
+                <div key={c.id} className="bg-card border border-border rounded-[16px] p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="p-3 rounded-xl bg-primary/10 border-none text-primary shrink-0">
+                      <div className="p-3 rounded-xl bg-muted border border-border text-brand shrink-0">
                         <Building2 className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-extrabold text-sm text-foreground">{c.property?.title || 'Propiedad'}</h4>
+                          <h4 className="font-bold text-sm text-foreground">{c.property?.title || 'Propiedad'}</h4>
                           {statusBadge(c.status)}
                         </div>
-                        <p className="text-xs text-ink-muted flex items-center gap-1">
+                        <p className="text-xs text-ink-secondary flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           {c.property?.address}{c.property?.city ? `, ${c.property.city}` : ''}
                         </p>
-                        <p className="text-xs text-ink-muted flex items-center gap-1 mt-0.5">
+                        <p className="text-xs text-ink-secondary flex items-center gap-1 mt-0.5">
                           <User className="w-3 h-3" />
                           Arrendador: {c.landlord?.full_name || '—'}
                         </p>
@@ -245,18 +238,25 @@ export default function TenantDashboard() {
                         <span className="block text-[10px] text-ink-secondary font-bold uppercase">Vence</span>
                         <span className="block font-semibold text-foreground">{c.end_date ? format(parseISO(c.end_date), 'dd/MMM/yyyy', { locale: es }) : 'Indefinido'}</span>
                       </div>
-                      <div className="text-right">
-                        <span className="block text-[10px] text-ink-secondary font-bold uppercase">Próximo pago</span>
-                        <span className={`block font-bold tabular-nums ${nextPmt ? 'text-warning' : 'text-success'}`}>
-                          {nextPmt ? format(parseISO(nextPmt.due_date), 'dd/MMM/yyyy', { locale: es }) : 'Al día'}
-                        </span>
-                      </div>
-                      <button
+          <div className="text-right">
+            <span className="block text-[10px] text-ink-secondary font-bold uppercase">Próximo pago</span>
+            <span className={`block font-bold tabular-nums ${nextPmt ? 'text-warning' : 'text-success'}`}>
+              {nextPmt ? format(parseISO(nextPmt.due_date), 'dd/MMM/yyyy', { locale: es }) : 'Al día'}
+            </span>
+            {nextPmt && (
+              <a href={`/pay/${c.id}`} target="_blank" rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:text-primary-hover transition-colors">
+                Pagar ahora ↗
+              </a>
+            )}
+          </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => router.push('/dashboard/payments')}
-                        className="flex items-center gap-1 px-4 py-2 bg-muted border border-transparent rounded-lg text-xs font-bold text-foreground hover:bg-primary hover:text-primary-foreground shadow-sm hover:shadow-btn transition-all cursor-pointer"
                       >
                         Ver pagos <ChevronRight className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -268,55 +268,78 @@ export default function TenantDashboard() {
 
       {/* Payment history */}
       <div>
-        <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-emerald-500" />
+        <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <CreditCard className="w-4 h-4 text-primary" />
           Historial de Pagos
         </h3>
         {payments.length === 0 ? (
-          <div className="py-24 text-center bg-muted/30 border border-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] rounded-xl flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5">
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-card shadow-card flex items-center justify-center mb-5 mx-auto">
               <CreditCard className="w-8 h-8 text-ink-muted" />
             </div>
             <h3 className="font-bold text-base text-foreground">No hay pagos registrados</h3>
             <p className="text-xs text-ink-muted mt-1.5 font-medium">Aún no se ha generado ningún registro de pago asociado a tus contratos.</p>
           </div>
         ) : (
-          <div className="bg-card border-none rounded-xl overflow-hidden shadow-card">
-            <div className="overflow-x-auto">
+          <div className="bg-card border border-border rounded-[16px] overflow-hidden shadow-card">
+            <div className="overflow-x-auto hidden md:block">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="p-4 text-[10px] font-bold text-ink-secondary uppercase tracking-wider pl-5">Propiedad</th>
-                    <th className="p-4 text-[10px] font-bold text-ink-secondary uppercase tracking-wider">Monto</th>
-                    <th className="p-4 text-[10px] font-bold text-ink-secondary uppercase tracking-wider">Vencimiento</th>
-                    <th className="p-4 text-[10px] font-bold text-ink-secondary uppercase tracking-wider">Estado</th>
-                    <th className="p-4 text-[10px] font-bold text-ink-secondary uppercase tracking-wider">Pagado el</th>
+                  <tr className="border-b border-border-subtle bg-muted">
+                    <th className="p-4 text-[10px] font-bold text-ink-muted uppercase tracking-wider pl-5">Propiedad</th>
+                    <th className="p-4 text-[10px] font-bold text-ink-muted uppercase tracking-wider">Monto</th>
+                    <th className="p-4 text-[10px] font-bold text-ink-muted uppercase tracking-wider">Vencimiento</th>
+                    <th className="p-4 text-[10px] font-bold text-ink-muted uppercase tracking-wider">Estado</th>
+                    <th className="p-4 text-[10px] font-bold text-ink-muted uppercase tracking-wider">Pagado el</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border-subtle">
                   {payments.slice(0, 20).map(p => (
-                    <tr key={p.id} className="hover:bg-muted/10 transition-colors text-xs">
+                    <tr key={p.id} className="hover:bg-muted transition-colors text-xs">
                       <td className="p-4 pl-5 font-medium text-foreground">{p.contract?.property?.title || '—'}</td>
                       <td className="p-4 font-bold text-foreground tabular-nums">{formatCOP(p.amount)}</td>
-                      <td className="p-3 text-muted-foreground">{format(parseISO(p.due_date), 'dd/MMM/yyyy', { locale: es })}</td>
-                      <td className="p-3">
+                      <td className="p-4 text-ink-secondary">{format(parseISO(p.due_date), 'dd/MMM/yyyy', { locale: es })}</td>
+                      <td className="p-4">
                         {p.paid ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 bg-primary-subtle border border-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                             <CheckCircle2 className="w-3 h-3" /> Pagado
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 bg-warning/10 border border-warning/20 text-warning text-[10px] font-bold px-2 py-0.5 rounded-full">
                             <Clock className="w-3 h-3" /> Pendiente
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-muted-foreground">
+                      <td className="p-4 text-ink-secondary">
                         {p.paid_at ? format(parseISO(p.paid_at), 'dd/MMM/yyyy', { locale: es }) : '—'}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="md:hidden divide-y divide-border-subtle">
+              {payments.slice(0, 10).map(p => (
+                <div key={p.id} className="p-4 space-y-2 hover:bg-muted transition-colors">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-foreground">{p.contract?.property?.title || '—'}</span>
+                    {p.paid ? (
+                      <span className="inline-flex items-center gap-1 bg-primary-subtle border border-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <CheckCircle2 className="w-3 h-3" /> Pagado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-warning/10 border border-warning/20 text-warning text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <Clock className="w-3 h-3" /> Pendiente
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div><span className="text-ink-muted font-medium">Monto: </span><span className="text-foreground font-bold tabular-nums">{formatCOP(p.amount)}</span></div>
+                    <div><span className="text-ink-muted font-medium">Vence: </span><span className="text-foreground">{format(parseISO(p.due_date), 'dd/MMM/yyyy', { locale: es })}</span></div>
+                    {p.paid_at && <div className="col-span-2"><span className="text-ink-muted font-medium">Pagado: </span><span className="text-foreground">{format(parseISO(p.paid_at), 'dd/MMM/yyyy', { locale: es })}</span></div>}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

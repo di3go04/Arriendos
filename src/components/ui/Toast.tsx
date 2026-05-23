@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { X, CheckCircle2, AlertTriangle, Info, ShieldAlert, Undo2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence,motion,useReducedMotion } from 'framer-motion';
+import { AlertTriangle,CheckCircle2,Info,ShieldAlert,Undo2,X } from 'lucide-react';
+import { createContext,useCallback,useContext,useState } from 'react';
 
 interface ToastData {
   id: string;
@@ -27,7 +27,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useCallback((data: Omit<ToastData, 'id'>) => {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev, { ...data, id }]);
-    // If it has undo, keep it longer
     const duration = data.onUndo ? 6000 : 4000;
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
   }, []);
@@ -54,15 +53,16 @@ const icons = {
 };
 
 const styles = {
-  success: 'bg-emerald-600 border-emerald-500',
-  error: 'bg-red-600 border-red-500',
-  warning: 'bg-amber-500 border-amber-400',
-  info: 'bg-blue-600 border-blue-500',
+  success: 'bg-[#4d7c0f] border-[#4d7c0f]/80',
+  error: 'bg-[#ef4444] border-[#ef4444]/80',
+  warning: 'bg-[#D97706] border-[#D97706]/80',
+  info: 'bg-[#1e3a5f] border-[#1e3a5f]/80',
 };
 
 function ToastItem({ type, message, onUndo, onClose }: ToastData & { onClose: () => void }) {
   const Icon = icons[type];
-  
+  const reduce = useReducedMotion();
+
   const handleUndo = () => {
     if (onUndo) onUndo();
     onClose();
@@ -70,16 +70,16 @@ function ToastItem({ type, message, onUndo, onClose }: ToastData & { onClose: ()
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 50, scale: 0.95 }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, x: 50, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+      transition={reduce ? { duration: 0.1 } : { type: 'spring', damping: 20, stiffness: 300 }}
       layout
       className={`pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-modal text-white text-xs font-bold border-none ${styles[type]}`}
     >
       <Icon className="w-5 h-5 shrink-0" />
       <p className="flex-1 leading-relaxed">{message}</p>
-      
+
       {onUndo && (
         <button
           onClick={handleUndo}
