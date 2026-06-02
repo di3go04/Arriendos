@@ -71,6 +71,92 @@
   --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.03);
 }
 
+.high-contrast {
+  --background: #FFFFFF;
+  --foreground: #000000;
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+  --surface-elevated: #F0F0F0;
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  --brand: #000000;
+  --brand-light: #1A1A1A;
+  --brand-foreground: #FFFFFF;
+  --brand-subtle: #E6E6E6;
+  --primary: #0000FF;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #0000CC;
+  --primary-subtle: #E6E6FF;
+  --primary-ring: rgba(0, 0, 255, 0.3);
+  --secondary: #000000;
+  --secondary-foreground: #FFFFFF;
+  --muted: #F0F0F0;
+  --muted-foreground: #000000;
+  --accent: #0000FF;
+  --accent-foreground: #FFFFFF;
+  --success: #006600;
+  --success-foreground: #FFFFFF;
+  --warning: #996600;
+  --warning-foreground: #FFFFFF;
+  --destructive: #CC0000;
+  --destructive-foreground: #FFFFFF;
+  --border: #000000;
+  --border-subtle: #666666;
+  --border-strong: #000000;
+  --input: #000000;
+  --ring: #0000FF;
+  --ink-primary: #000000;
+  --ink-secondary: #000000;
+  --ink-tertiary: #000000;
+  --ink-muted: #000000;
+  --shadow-card: 0 0 0 1px #000000;
+  --shadow-card-hover: 0 0 0 2px #000000;
+  --shadow-modal: 0 0 0 2px #000000;
+  --shadow-btn: 0 0 0 1px #000000;
+  --shadow-btn-hover: 0 0 0 2px #000000;
+  --shadow-elevated: 0 0 0 2px #000000;
+  --shadow-float: 0 0 0 1px #000000;
+  --shadow-glass: 0 0 0 2px #000000;
+  --shadow-inner: inset 0 0 0 1px #000000;
+}
+
+.sepia {
+  --background: #F4ECD8;
+  --foreground: #433422;
+  --card: #FFF8E7;
+  --card-foreground: #433422;
+  --surface-elevated: #FFF8E7;
+  --popover: #FFF8E7;
+  --popover-foreground: #433422;
+  --brand: #5C4033;
+  --brand-light: #7A5C4A;
+  --brand-foreground: #FFF8E7;
+  --brand-subtle: #EDE0C8;
+  --primary: #8B4513;
+  --primary-foreground: #FFF8E7;
+  --primary-hover: #6B3410;
+  --primary-subtle: #F0E0C8;
+  --primary-ring: rgba(139, 69, 19, 0.2);
+  --secondary: #5C4033;
+  --secondary-foreground: #FFF8E7;
+  --muted: #E8DCC8;
+  --muted-foreground: #7A6A5A;
+  --accent: #8B4513;
+  --accent-foreground: #FFF8E7;
+  --success: #4A7C3F;
+  --warning: #A67C00;
+  --destructive: #A04040;
+  --border: #D4C8B0;
+  --border-subtle: #E0D4C0;
+  --border-strong: #B8A890;
+  --input: #D4C8B0;
+  --ring: #8B4513;
+  --ink-primary: #433422;
+  --ink-secondary: #5C4033;
+  --ink-tertiary: #7A6A5A;
+  --ink-muted: #9A8A7A;
+}
+
 .dark {
   --background: #0B1121;
   --foreground: #F4F6F9;

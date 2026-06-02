@@ -23,6 +23,7 @@ ShieldCheck,
 User,
 X
 } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams,useRouter } from 'next/navigation';
 import React,{ useCallback,useEffect,useRef,useState } from 'react';
 
@@ -407,7 +408,7 @@ export default function SignContractPage() {
           Documento del Contrato
         </h3>
         <div className="bg-white text-black border border-border rounded-3xl p-6 md:p-10 shadow-sm max-h-[600px] overflow-y-auto prose prose-sm max-w-none">
-          <div dangerouslySetInnerHTML={{ __html: contract.contract_content || '<p class="text-muted-foreground">Sin contenido disponible</p>' }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(contract.contract_content || '<p class="text-muted-foreground">Sin contenido disponible</p>') }} />
         </div>
       </div>
 

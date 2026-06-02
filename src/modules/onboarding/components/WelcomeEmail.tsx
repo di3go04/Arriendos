@@ -2,7 +2,7 @@ import { resend } from "@/lib/resend";
 
 export const sendWelcomeEmail = async () => {
     if (!resend) {
-        console.log("[Resend] Simulated welcome email – no API key");
+        console.warn("[Resend] Welcome email not sent: RESEND_API_KEY not configured");
         return;
     }
 

@@ -6,11 +6,13 @@ import { supabase } from '@/lib/supabase';
 import { AlertTriangle,ArrowRight,Building2,CheckCircle,Eye,EyeOff,KeyRound,Loader2,Mail,Phone,User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import React,{ useEffect,useState } from 'react';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
+  const locale = useLocale();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -55,7 +57,7 @@ export default function RegisterPage() {
         // Enviar email de bienvenida
         try {
           await fetch('/api/onboarding/welcome-email', { method: 'POST' });
-        } catch {}
+        } catch (e) { console.error('Register: fallo al enviar email de bienvenida', e); }
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -221,7 +223,7 @@ export default function RegisterPage() {
                   <input
                     type={showPassword ? 'text' : 'password'} required value={password}
                     onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
-                    onChange={e => setPassword(e.target.value)} placeholder="Mín 6 carácteres"
+                    onChange={e => setPassword(e.target.value)}                     placeholder="Mín 6 caracteres"
                     className="w-full bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] text-[#1E293B] dark:text-[#F1F5F9] text-xs rounded-xl focus:border-[#1e3a5f] dark:focus:border-[#1e3a5f] block pl-9 pr-9 p-2.5 outline-none transition-all placeholder:text-[#94A3B8]/50"
                   />
                   <button
@@ -299,7 +301,7 @@ export default function RegisterPage() {
 
           <div className="text-center text-sm text-[#64748B] dark:text-[#94A3B8]">
             <span>¿Ya tienes una cuenta? </span>
-            <Link href="/login" className="text-[#1e3a5f] dark:text-[#1e3a5f] hover:underline font-semibold">
+            <Link href={`/${locale}/login`} className="text-[#1e3a5f] dark:text-[#1e3a5f] hover:underline font-semibold">
               Inicia sesión aquí
             </Link>
           </div>

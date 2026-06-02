@@ -129,7 +129,7 @@ export const Wizard = ({ onComplete }: { onComplete?: () => void }) => {
             </div>
             <h3 className="text-lg font-bold text-[#1E293B] dark:text-white">¡Todo listo!</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Presiona "Finalizar" para completar la configuración y recibir un email de bienvenida.
+              Presiona &quot;Finalizar&quot; para completar la configuración y recibir un email de bienvenida.
             </p>
           </div>
         )}

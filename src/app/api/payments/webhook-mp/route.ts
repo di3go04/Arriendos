@@ -46,7 +46,7 @@ async function handlePaymentNotification(paymentId: string) {
   if (!paymentData) return;
 
   let externalRef: { userId?: string; planId?: string } = {};
-  try { externalRef = JSON.parse(paymentData.external_reference || '{}'); } catch {}
+  try { externalRef = JSON.parse(paymentData.external_reference || '{}'); } catch { console.warn('Webhook MP: fallo al parsear external_reference en payment'); }
 
   const { userId, planId } = externalRef;
   if (!userId) return;
@@ -102,7 +102,7 @@ async function handlePaymentNotification(paymentId: string) {
               <p>Plan: ${planId}<br/>ID: ${paymentId}</p></div>`,
           });
         }
-      } catch {}
+      } catch (e) { console.error('Webhook MP: error al enviar email de pago confirmado', e); }
     }
   }
 }
@@ -115,7 +115,7 @@ async function handlePreapprovalNotification(preapprovalId: string) {
   if (!data) return;
 
   let externalRef: { userId?: string; planId?: string } = {};
-  try { externalRef = JSON.parse(data.external_reference || '{}'); } catch {}
+  try { externalRef = JSON.parse(data.external_reference || '{}'); } catch { console.warn('Webhook MP: fallo al parsear external_reference en preapproval'); }
 
   const { userId, planId } = externalRef;
   if (!userId || !planId) return;
@@ -164,7 +164,7 @@ async function handlePreapprovalNotification(preapprovalId: string) {
               <p>Tu suscripción al plan ${planId} está activa.</p></div>`,
           });
         }
-      } catch {}
+      } catch (e) { console.error('Webhook MP: error al enviar email de suscripcion', e); }
     }
   }
 

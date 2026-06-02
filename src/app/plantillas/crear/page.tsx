@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { sanitizeHtml } from '@/lib/sanitize';
 import BackToHome from '@/components/shared/BackToHome';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -426,7 +427,7 @@ export default function CrearPlantillaPage() {
                       </span>
                     </div>
                     <div className="p-6 max-h-[500px] overflow-y-auto bg-white text-slate-800 text-sm leading-relaxed">
-                      <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }} />
                     </div>
                   </div>
                 )}

@@ -35,9 +35,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# temp pages build
+.temp-gh-pages/
+
+# kilocode / claude / cursor
+.kilo/
+.kilocode/
+.claude/
+.cursor/
 
 # typescript
 *.tsbuildinfo

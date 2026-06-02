@@ -1,5 +1,6 @@
 'use client';
 
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useState, useRef, useCallback, createElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -358,7 +359,7 @@ export default function NewContractWizard() {
                 <p className="mt-1">Verifica que todos los datos sean correctos. Una vez firmado, no podrás modificarlo.</p>
               </div>
               <div className="bg-white border border-border rounded-2xl p-6 shadow-card overflow-auto max-h-[500px] text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: state.compiledHtml }} />
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(state.compiledHtml) }} />
             </div>
           )}
 

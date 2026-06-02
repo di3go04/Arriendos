@@ -3,6 +3,7 @@
  * Ejecutar en desarrollo: npm run whatsapp:bridge
  * Escanear QR en terminal la primera vez; sesión en auth_info/
  */
+/* eslint-disable react-hooks/rules-of-hooks */
 import http from 'node:http';
 import { default as makeWASocket, DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';

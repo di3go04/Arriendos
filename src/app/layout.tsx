@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { PwaInit } from '@/components/modules/PwaInit';
 import PostHogProvider from '@/components/PostHogProvider';
+import { SchemaOrg } from '@/components/seo/SchemaOrg';
 import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from '@/context/AuthContext';
 import { I18nProvider } from '@/context/I18nContext';
@@ -48,6 +49,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+        <SchemaOrg />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <I18nProvider locale={locale} messages={messages}>
             <ThemeProvider>

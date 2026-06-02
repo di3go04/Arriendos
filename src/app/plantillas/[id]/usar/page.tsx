@@ -1,6 +1,7 @@
 'use client';
 
 import BackToHome from '@/components/shared/BackToHome';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useAuth } from '@/context/AuthContext';
 import type { ContractTemplate } from '@/types';
 import {
@@ -380,7 +381,7 @@ export default function UsarPlantillaPage({
                       className="bg-white text-slate-800 text-sm leading-relaxed p-8 rounded-xl border border-border shadow-inner"
                       style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                     >
-                      <div dangerouslySetInnerHTML={{ __html: documentoHtml }} />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(documentoHtml) }} />
                     </div>
                     <div className="mt-4 flex justify-end">
                       <button

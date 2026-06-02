@@ -1,5 +1,6 @@
 'use client';
 
+import { sanitizeHtml } from '@/lib/sanitize';
 import BackToHome from '@/components/shared/BackToHome';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
@@ -687,7 +688,7 @@ export default function TemplatesPage() {
                         id="manual-visual-editor"
                         contentEditable
                         suppressContentEditableWarning
-                        onBlur={(e) => setContent(e.currentTarget.innerHTML)}
+                        onBlur={(e) => setContent(sanitizeHtml(e.currentTarget.innerHTML))}
                         dangerouslySetInnerHTML={{ __html: content }}
                         className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
                       />
@@ -989,7 +990,7 @@ export default function TemplatesPage() {
                           id="ai-visual-editor"
                           contentEditable
                           suppressContentEditableWarning
-                          onBlur={(e) => setAiResultContent(e.currentTarget.innerHTML)}
+                          onBlur={(e) => setAiResultContent(sanitizeHtml(e.currentTarget.innerHTML))}
                           dangerouslySetInnerHTML={{ __html: aiResultContent }}
                           className="w-full bg-white text-slate-800 border border-border text-xs rounded-xl p-6 outline-none min-h-[350px] max-h-[450px] overflow-y-auto shadow-inner leading-relaxed"
                         />

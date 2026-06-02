@@ -1,5 +1,6 @@
 'use client';
 
+import { sanitizeHtml } from '@/lib/sanitize';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ListSkeleton } from '@/components/ui/Skeleton';
 import { SmartInput } from '@/components/ui/SmartInput';
@@ -342,12 +343,12 @@ export default function LeasesPage() {
   ) => {
     const list = [];
     const start = new Date(startStr);
-    let end = endStr ? new Date(endStr) : new Date(start);
+    const end = endStr ? new Date(endStr) : new Date(start);
     if (!endStr) {
       end.setFullYear(end.getFullYear() + 1); // Generar 1 año por defecto
     }
 
-    let current = new Date(start);
+    const current = new Date(start);
     while (current <= end) {
       const due = new Date(current.getFullYear(), current.getMonth(), dueDay);
       if (due < start) {
@@ -982,7 +983,7 @@ export default function LeasesPage() {
                 <div className="p-8 bg-white border-b border-border">
                   {viewingContract.contract_content ? (
                     <div
-                      dangerouslySetInnerHTML={{ __html: viewingContract.contract_content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(viewingContract.contract_content) }}
                       className="prose max-w-none text-slate-800"
                     />
                   ) : (

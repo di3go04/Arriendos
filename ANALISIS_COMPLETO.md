@@ -183,4 +183,4 @@ Basado en análisis de mercado de software property management, codebase actual 
 
 ---
 
-*Análisis generado el ${new Date().toLocaleDateString('es-CO')} basado en revisión completa del código fuente, arquitectura, dependencias y mercado actual de property management SaaS.*
+*Análisis generado en junio 2026 basado en revisión completa del código fuente, arquitectura, dependencias y mercado actual de property management SaaS.*

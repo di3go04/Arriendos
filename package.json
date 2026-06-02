@@ -14,7 +14,8 @@
     "whatsapp:bridge": "node scripts/whatsapp-bridge.mjs",
     "test:modules": "jest src/modules",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "prepare": "husky"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -69,16 +70,22 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
-    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "lint-staged": "^17.0.7",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.10",
     "typescript": "^5",
     "whatwg-fetch": "^3.6.20"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
   },
   "overrides": {
     "postcss": "^8.5.15",

@@ -7,17 +7,17 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-require-imports": "error",
-      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@next/next/no-img-element": "off",
       "@next/next/no-html-link-for-pages": "off",
-      "prefer-const": "off",
-      "react-hooks/exhaustive-deps": "off",
-      "react-hooks/immutability": "off",
-      "react-hooks/purity": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/static-components": "off"
+      "@typescript-eslint/no-unused-vars": "warn",
+      "prefer-const": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/purity": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/static-components": "warn",
     }
   },
   // Override default ignores of eslint-config-next.
@@ -27,6 +27,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".temp-gh-pages/**",
+    ".kilocode/**",
+    ".kilo/**",
+    ".cursor/**",
+    ".claude/**",
+    "node_modules/**",
   ]),
 ]);
 

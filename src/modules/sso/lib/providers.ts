@@ -10,8 +10,7 @@ export const ssoOptions: NextAuthConfig = {
     ],
     callbacks: {
         async session({ session, token }) {
-            // @ts-ignore
-            session.user.id = token.sub!;
+            session.user.id = token.sub as string;
             return session;
         },
     },

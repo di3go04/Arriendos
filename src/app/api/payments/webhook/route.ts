@@ -27,7 +27,7 @@ async function handlePreapprovalNotification(body: LooseValue, data: LooseValue)
   let externalRef: { userId?: string; planId?: string } = {};
   try {
     externalRef = JSON.parse(preApprovalData.external_reference || '{}');
-  } catch {}
+  } catch { console.warn('Webhook: fallo al parsear external_reference en preapproval'); }
 
   const userId = externalRef.userId;
   const planId = externalRef.planId;
@@ -104,7 +104,7 @@ async function handlePreapprovalNotification(body: LooseValue, data: LooseValue)
             </div>`,
           });
         }
-      } catch {}
+      } catch (e) { console.error('Webhook: error al enviar email de suscripcion', e); }
     }
   }
 
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
     let externalRef: { userId?: string; planId?: string } = {};
     try {
       externalRef = JSON.parse(paymentData.external_reference || '{}');
-    } catch {}
+    } catch { console.warn('Webhook: fallo al parsear external_reference en payment'); }
 
     const userId = externalRef.userId;
     const planId = externalRef.planId;
@@ -247,7 +247,7 @@ export async function POST(req: Request) {
               </div>`,
             });
           }
-        } catch {}
+        } catch (e) { console.error('Webhook: error al enviar email de pago confirmado', e); }
       }
     }
 
