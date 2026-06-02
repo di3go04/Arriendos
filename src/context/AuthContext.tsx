@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
     let subscription: { unsubscribe: () => void } | null = null;
-    const safetyTimer = setTimeout(() => { if (mounted) setLoading(false); }, 8000);
+    const safetyTimer = setTimeout(() => { if (mounted) setLoading(false); }, 3000);
 
     const checkSession = async () => {
       try {

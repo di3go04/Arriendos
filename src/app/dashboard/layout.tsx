@@ -5,7 +5,6 @@ import BottomNav from '@/components/shared/BottomNav';
 import Navbar from '@/components/shared/Navbar';
 import Sidebar from '@/components/shared/Sidebar';
 import { useAuth } from '@/context/AuthContext';
-import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React,{ useEffect,useState } from 'react';
 
@@ -23,20 +22,6 @@ export default function DashboardLayout({
       router.push('/login');
     }
   }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand to-primary flex items-center justify-center mb-4 shadow-lg">
-          <span className="text-white font-bold text-sm">A</span>
-        </div>
-        <Loader2 className="w-5 h-5 animate-spin text-primary mb-3" />
-        <p className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-          Cargando sesión segura...
-        </p>
-      </div>
-    );
-  }
 
   if (!user) {
     return null;

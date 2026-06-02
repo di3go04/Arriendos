@@ -16,7 +16,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const t = useTranslations();
   const locale = useLocale();
-  const { user, profile, loading } = useAuth();
+  const { user, profile } = useAuth();
   const { signIn } = useEnterpriseLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,13 +33,13 @@ export default function LoginPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       const role = profile?.role || user.user_metadata?.role || 'arrendatario';
       if (role === 'admin') router.push('/admin');
       else if (role === 'arrendador') router.push('/dashboard/landlord');
       else router.push('/dashboard/tenant');
     }
-  }, [user, profile, loading, router]);
+  }, [user, profile, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,14 +71,6 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0F172A]">
-        <Loader2 className="w-10 h-10 animate-spin text-[#1e3a5f]" />
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-screen flex bg-[#F8FAFC] dark:bg-[#0F172A]">

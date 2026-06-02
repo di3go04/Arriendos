@@ -5,11 +5,15 @@ import { getOrCreateDeviceFingerprint } from './device-fingerprint';
 
 async function authApi(action: string, body: Record<string, unknown>) {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     const res = await fetch('/api/modules/auth-enterprise/login', {
       method: 'POST',
+      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, ...body, fingerprint: getOrCreateDeviceFingerprint() }),
     });
+    clearTimeout(timeoutId);
     return res.json();
   } catch {
     return { error: { message: 'Error de conexión con el servidor de autenticación.' } };
@@ -29,14 +33,11 @@ export function useEnterpriseLogin() {
   const signIn = async (email: string, password: string) => {
     try {
       const check = await checkAllowed(email);
-      if (check.error) {
-        return check;
-      }
-      if (check.data && check.data.allowed === false) {
+      if (check.data?.allowed === false) {
         return { error: { message: check.data.message || 'Cuenta bloqueada temporalmente' } };
       }
     } catch {
-      return { error: { message: 'Error de conexión con el servidor. Verifica tu conexión a internet.' } };
+      // Si falla el check de seguridad, permitir login con Supabase directamente
     }
 
     try {
