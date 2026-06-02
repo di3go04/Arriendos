@@ -69,13 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
     let subscription: { unsubscribe: () => void } | null = null;
+    const safetyTimer = setTimeout(() => { if (mounted) setLoading(false); }, 8000);
 
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        
         if (!mounted) return;
-
         if (data?.session?.user) {
           setUser(data.session.user);
           await fetchProfile(data.session.user.id, data.session.user.user_metadata);
@@ -83,9 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Session check error:', error);
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
+        clearTimeout(safetyTimer);
       }
     };
 
