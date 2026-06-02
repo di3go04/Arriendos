@@ -534,7 +534,7 @@ export default function DashboardPage() {
             </p>
           </div>
           
-          <div className="h-80 w-full text-xs">
+          <div className="h-80 w-full min-w-0 min-h-0 text-xs">
             {chartData.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-ink-muted gap-2 bg-muted/20 border border-dashed border-border/60 rounded-2xl">
                 <Briefcase className="w-8 h-8 opacity-45" />
