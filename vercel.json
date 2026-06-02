@@ -4,7 +4,6 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "regions": ["gru1"],
-  "public": true,
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -26,7 +25,5 @@
       ]
     }
   ],
-  "redirects": [
-    { "source": "/", "destination": "/es", "permanent": true }
-  ]
+  "redirects": []
 }
