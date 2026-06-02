@@ -24,7 +24,6 @@ export default async function LocaleLayout({
 
   return (
     <>
-      <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://app.posthog.com https://cdn.posthog.com https://us-assets.i.posthog.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.posthog.com https://app.posthog.com https://us-assets.i.posthog.com; img-src 'self' data: https://*.posthog.com https://cdn.jsdelivr.net; font-src 'self'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';" />
       <NextIntlClientProvider locale={locale} messages={messages}>
         <I18nProvider locale={locale} messages={messages}>
           {children}
