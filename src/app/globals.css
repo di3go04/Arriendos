@@ -60,15 +60,15 @@
   --radius-xl: 18px;
 
   /* Shadows — capas reales con blur */
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-card-hover: 0 8px 25px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-  --shadow-modal: 0 20px 60px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-btn: 0 2px 4px rgba(37,99,235,0.15);
-  --shadow-btn-hover: 0 4px 12px rgba(37,99,235,0.25);
-  --shadow-elevated: 0 16px 48px rgba(0,0,0,0.1);
-  --shadow-float: 0 8px 30px rgba(0,0,0,0.10);
-  --shadow-glass: 0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.08);
-  --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-btn: 0 2px 4px rgba(37, 99, 235, 0.15);
+  --shadow-btn-hover: 0 4px 12px rgba(37, 99, 235, 0.25);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.1);
+  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.10);
+  --shadow-glass: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .dark {
@@ -117,20 +117,24 @@
   --ink-tertiary: #A0AEC0;
   --ink-muted: #718096;
 
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.03);
-  --shadow-card-hover: 0 8px 25px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-  --shadow-modal: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
-  --shadow-btn: 0 2px 4px rgba(59,130,246,0.3);
-  --shadow-btn-hover: 0 4px 12px rgba(59,130,246,0.4);
-  --shadow-elevated: 0 16px 48px rgba(0,0,0,0.5);
-  --shadow-float: 0 8px 30px rgba(0,0,0,0.4);
-  --shadow-glass: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.3);
-  --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-btn: 0 2px 4px rgba(59, 130, 246, 0.3);
+  --shadow-btn-hover: 0 4px 12px rgba(59, 130, 246, 0.4);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --shadow-glass: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 @theme {
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-display: Poppins, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* ─── Font stacks con fallback multilenguaje ─── */
+  /* Inter cubre Latin, Latin-ext, Cyrillic, Cyrillic-ext, Greek */
+  /* Noto Sans cubre Devanagari, Vietnamese, más caracteres especiales */
+  /* Arial/Helvetica: fallback universal */
+  --font-sans: var(--font-sans, Inter), var(--font-noto, Noto Sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-display, Poppins), var(--font-noto, Noto Sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -185,7 +189,9 @@
   --shadow-inner: var(--shadow-inner);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   background: var(--background);
@@ -195,12 +201,29 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  /* Text overflow prevention — multilenguaje */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* hyphens automáticos para alemán y lenguas compuestas */
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
 }
 
-h1, h2, h3, h4, h5, h6, .heading {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.heading {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
   font-weight: 700;
+  /* Headings no deben romperse sin necesidad */
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -ms-hyphens: manual;
 }
 
 ::selection {
@@ -208,36 +231,263 @@ h1, h2, h3, h4, h5, h6, .heading {
   color: var(--primary-foreground);
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* ════════════════════════════════════════════════
+   🌍 IDIOMAS — REGLAS ESPECÍFICAS POR LOCALE
+   ════════════════════════════════════════════════ */
+
+/* ─── RTL (Árabe, Hebreo, Urdu, etc.) ─── */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .ltr-force {
+  direction: ltr;
+  text-align: left;
+}
+
+/* ─── Alemán: palabras compuestas muy largas ─── */
+html[lang="de"] {
+  /* Palabras como "Haftpflichtversicherung" deben partirse */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+html[lang="de"] h1,
+html[lang="de"] h2,
+html[lang="de"] h3 {
+  word-break: break-word;
+  hyphens: auto;
+  /* En alemán, headlines largos necesitan hyphenación */
+}
+
+/* ─── Francés: espacios antes de « » y !? ─── */
+html[lang="fr"] .french-punctuation {
+  /* Espacio fino antes de !, ?, ;, :, », « */
+  font-feature-settings: "kern";
+}
+
+/* ─── CJK (Chino, Japonés, Coreano) ─── */
+html[lang="zh"],
+html[lang="ja"],
+html[lang="ko"] {
+  font-family: var(--font-cjk-sc, "Noto Sans SC"), var(--font-cjk-jp, "Noto Sans JP"), var(--font-cjk-kr, "Noto Sans KR"), var(--font-sans);
+  /* CJK no usa cursiva — forzar normal */
+  font-style: normal !important;
+  line-height: 1.8;
+  /* Caracteres CJK son más densos, necesitan más line-height */
+}
+
+/* No italic en CJK */
+html[lang="zh"] em,
+html[lang="zh"] i,
+html[lang="ja"] em,
+html[lang="ja"] i,
+html[lang="ko"] em,
+html[lang="ko"] i {
+  font-style: normal;
+}
+
+/* ─── Ruso / Búlgaro (Cirílico) ─── */
+html[lang="ru"],
+html[lang="bg"],
+html[lang="sr"],
+html[lang="uk"] {
+  /* Cirílico necesita line-height ligeramente mayor */
+  line-height: 1.6;
+}
+
+/* ─── Vietnamita ─── */
+html[lang="vi"] {
+  /* Diacríticos apilados necesitan más altura */
+  line-height: 1.7;
+}
+
+/* ─── Thai ─── */
+html[lang="th"] {
+  /* Tailandés necesita line-height extra por caracteres ascendentes */
+  line-height: 2;
+  font-family: var(--font-noto, "Noto Sans"), "Noto Sans Thai", var(--font-sans);
+}
+
+/* ─── Line-height base mejorado por idioma ─── */
+p,
+li,
+.text-body {
+  line-height: 1.6;
+}
+
+/* ════════════════════════════════════════════════
+   UTILIDADES DE TIPOGRAFÍA MULTILENGUAJE
+   ════════════════════════════════════════════════ */
+
+/* Clase para desactivar hyphens en elementos específicos */
+.no-hyphens {
+  hyphens: none;
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* Clase para forzar overflow-wrap en texto largo */
+.break-long-words {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Clase para texto monoespaciado (código, números) */
+.font-mono {
+  font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", "Courier New", monospace;
+}
 
 /* Animations */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes scaleIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes slideInRight { from { transform: translateX(16px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes slideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-@keyframes ripple {
-  0% { box-shadow: 0 0 0 0 var(--primary-ring); }
-  100% { box-shadow: 0 0 0 8px transparent; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
-.animate-fade-in { animation: fadeIn 0.15s ease-out forwards; }
-.animate-slide-up { animation: slideUp 0.25s ease-out forwards; }
-.animate-scale-in { animation: scaleIn 0.2s ease-out forwards; }
-.animate-slide-in-right { animation: slideInRight 0.2s ease-out forwards; }
-.animate-slide-down { animation: slideDown 0.2s ease-out forwards; }
-.animate-pulse { animation: pulse 2s ease-in-out infinite; }
-.animate-spin { animation: spin 0.6s linear infinite; }
-.animate-ripple { animation: ripple 0.6s ease-out; }
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 var(--primary-ring);
+  }
+
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 0.6s linear infinite;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
 
 /* Glassmorphism utility */
 .glass {
@@ -246,6 +496,7 @@ h1, h2, h3, h4, h5, h6, .heading {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
+
 .dark .glass {
   background: rgba(17, 24, 39, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -259,7 +510,10 @@ h1, h2, h3, h4, h5, h6, .heading {
   border-radius: var(--radius-sm);
 }
 
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
   font-family: inherit;
 }
 
@@ -276,6 +530,7 @@ input, select, textarea, button {
 .card-hover {
   transition: all 0.2s ease;
 }
+
 .card-hover:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
@@ -286,9 +541,11 @@ input, select, textarea, button {
   transition: all 0.15s ease;
   cursor: pointer;
 }
+
 .btn-primary:active {
   transform: scale(0.97);
 }
+
 .btn-primary:focus-visible {
   animation: ripple 0.6s ease-out;
 }
@@ -314,6 +571,7 @@ input, select, textarea, button {
 
 /* ─── Reduced motion — respeta preferencias del usuario ─── */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -351,12 +609,22 @@ input, select, textarea, button {
   background: #1e293b;
   color: #f1f5f9;
 }
+
 .dark .quill-editor-wrapper .ql-toolbar {
   background: #111827;
 }
-.dark .quill-editor-wrapper .ql-toolbar .ql-stroke { stroke: #94a3b8; }
-.dark .quill-editor-wrapper .ql-toolbar .ql-fill { fill: #94a3b8; }
-.dark .quill-editor-wrapper .ql-toolbar .ql-picker-label { color: #94a3b8; }
+
+.dark .quill-editor-wrapper .ql-toolbar .ql-stroke {
+  stroke: #94a3b8;
+}
+
+.dark .quill-editor-wrapper .ql-toolbar .ql-fill {
+  fill: #94a3b8;
+}
+
+.dark .quill-editor-wrapper .ql-toolbar .ql-picker-label {
+  color: #94a3b8;
+}
 
 /* ─── Campo Chips ─── */
 .campo-plantilla {
@@ -373,22 +641,29 @@ input, select, textarea, button {
   line-height: 1.5;
   vertical-align: baseline;
 }
+
 .dark .campo-plantilla {
   background: #334155;
   border-color: #475569;
   color: #e2e8f0;
 }
+
 .campo-plantilla::before {
   content: '⚡';
   margin-right: 3px;
   font-size: 0.6875rem;
   opacity: 0.7;
 }
-.ql-editor .campo-plantilla { cursor: pointer; }
+
+.ql-editor .campo-plantilla {
+  cursor: pointer;
+}
+
 .ql-editor .campo-plantilla:hover {
   background: #dee2e6;
   border-color: #adb5bd;
 }
+
 .dark .ql-editor .campo-plantilla:hover {
   background: #475569;
   border-color: #64748b;

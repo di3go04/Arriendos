@@ -20,28 +20,28 @@
     "back_home": "Volver al inicio"
   },
   "auth": {
-    "forgot_password": "?Olvidaste tu contrase?a?",
-    "has_account": "?Ya tienes cuenta?",
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "has_account": "¿Ya tienes cuenta?",
     "login_button": "Iniciar sesión",
     "login_email": "Correo electrónico",
     "login_password": "Contraseña",
     "login_title": "Iniciar Sesión",
-    "no_account": "?No tienes cuenta?",
+    "no_account": "¿No tienes cuenta?",
     "register_button": "Crear cuenta",
     "register_title": "Crear Cuenta",
     "role_select": "Eres",
-    "login_subtitle": "Inicia sesi?n para continuar",
-    "logging_in": "Iniciando sesi?n...",
-    "invalid_credentials": "Credenciales incorrectas. Verifica tu correo y contrase?a."
+    "login_subtitle": "Inicia sesión para continuar",
+    "logging_in": "Iniciando sesión...",
+    "invalid_credentials": "Credenciales incorrectas. Verifica tu correo y contraseña."
   },
   "comparing": {
     "title": "RentNow vs Competencia",
     "heading_prefix": "RentNow vs ",
     "heading_highlight": "Competencia",
-    "free_dash": "?",
+    "free_dash": "—",
     "features": {
       "ai": "IA Predictiva",
-      "portal": "Portal p?blico",
+      "portal": "Portal público",
       "multiCurrency": "Multi-monedas",
       "pwa": "Offline",
       "multiLang": "Multi-idioma",
@@ -74,7 +74,7 @@
   "cta": {
     "button": "Comenzar ahora",
     "subtitle": "Únete a profesionales que ya optimizaron su administración con Rentnow.",
-    "title": "?Listo para simplificar tu gesti?n de arriendos?"
+    "title": "¿Listo para simplificar tu gestión de arriendos?"
   },
   "dashboard": {
     "all_clear": "¡Todo al día!",
@@ -493,10 +493,10 @@
   },
   "stats": {
     "authenticated_title": "Empieza a gestionar",
-    "authenticated_desc": "A?n no tienes propiedades registradas. Crea tu primera propiedad y empieza a gestionar tus arriendos desde un solo lugar.",
+    "authenticated_desc": "Aún no tienes propiedades registradas. Crea tu primera propiedad y empieza a gestionar tus arriendos desde un solo lugar.",
     "authenticated_cta": "Crear propiedad",
     "guest_title": "Comienza ahora",
-    "guest_desc": "Inicia sesi?n o crea una cuenta para ver tus estad?sticas reales de propiedades, contratos y pagos.",
+    "guest_desc": "Inicia sesión o crea una cuenta para ver tus estadísticas reales de propiedades, contratos y pagos.",
     "guest_cta": "Crear cuenta"
   }
 }

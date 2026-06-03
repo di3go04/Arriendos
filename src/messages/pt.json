@@ -17,7 +17,7 @@
     "search": "Buscar",
     "upload": "Enviar",
     "view": "Visualizar",
-    "back_home": "Voltar ao in?cio"
+    "back_home": "Voltar ao in„cio"
   },
   "auth": {
     "forgot_password": "Esqueceu sua senha?",
@@ -26,22 +26,22 @@
     "login_email": "E-mail",
     "login_password": "Senha",
     "login_title": "Entrar",
-    "no_account": "N?o tem conta?",
+    "no_account": "N„o tem conta?",
     "register_button": "Criar conta",
     "register_title": "Criar Conta",
     "role_select": "Voc√™ √©",
-    "login_subtitle": "Fa?a login para continuar",
+    "login_subtitle": "Fa„a login para continuar",
     "logging_in": "Entrando...",
     "invalid_credentials": "Credenciais incorretas. Verifique seu e-mail e senha."
   },
   "comparing": {
     "title": "RentNow vs Concorr√™ncia",
     "heading_prefix": "RentNow vs ",
-    "heading_highlight": "Concorr?ncia",
+    "heading_highlight": "Concorr„ncia",
     "free_dash": "?",
     "features": {
       "ai": "IA preditiva",
-      "portal": "Portal p?blico",
+      "portal": "Portal p„blico",
       "multiCurrency": "Multi-moeda",
       "pwa": "Offline",
       "multiLang": "Multi-idioma",
@@ -74,7 +74,7 @@
   "cta": {
     "button": "Come√ßar agora",
     "subtitle": "Junte-se a profissionais que j√° otimizaram sua administra√ß√£o com Rentnow.",
-    "title": "Pronto para simplificar sua gest?o de alugu?is?"
+    "title": "Pronto para simplificar sua gest„o de alugu„is?"
   },
   "dashboard": {
     "all_clear": "Tudo em dia!",
@@ -221,7 +221,7 @@
     },
     "subtitle": "Administre propriedades, contratos, pagamentos e inquilinos de um s√≥ lugar. Com IA preditiva e portal p√∫blico.",
     "title": "A plataforma inteligente para gerenciar seus alugu√©is",
-    "tagline": "Plataforma profissional de alugu?is"
+    "tagline": "Plataforma profissional de alugu„is"
   },
   "language": {
     "de": "Deutsch",
@@ -476,10 +476,10 @@
   },
   "stats": {
     "authenticated_title": "Comece a gerenciar",
-    "authenticated_desc": "Voc? ainda n?o tem propriedades registradas. Crie sua primeira propriedade e comece a gerenciar seus alugu?is de um s? lugar.",
+    "authenticated_desc": "Voc? ainda n„o tem propriedades registradas. Crie sua primeira propriedade e comece a gerenciar seus alugu„is de um s? lugar.",
     "authenticated_cta": "Criar propriedade",
     "guest_title": "Comece agora",
-    "guest_desc": "Fa?a login ou crie uma conta para ver suas estat?sticas reais de propriedades, contratos e pagamentos.",
+    "guest_desc": "Fa„a login ou crie uma conta para ver suas estat„sticas reais de propriedades, contratos e pagamentos.",
     "guest_cta": "Criar conta"
   },
   "faq": {
