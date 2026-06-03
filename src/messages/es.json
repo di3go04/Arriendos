@@ -20,19 +20,19 @@
     "back_home": "Volver al inicio"
   },
   "auth": {
-     "forgot_password": "&#191;Olvidaste tu contrase&#241;a?",
-     "has_account": "&#191;Ya tienes cuenta?",
+    "forgot_password": "&#191;Olvidaste tu contrase&#241;a?",
+    "has_account": "&#191;Ya tienes cuenta?",
     "login_button": "Iniciar sesión",
     "login_email": "Correo electrónico",
     "login_password": "Contraseña",
     "login_title": "Iniciar Sesión",
-     "no_account": "&#191;No tienes cuenta?",
+    "no_account": "&#191;No tienes cuenta?",
     "register_button": "Crear cuenta",
     "register_title": "Crear Cuenta",
     "role_select": "Eres",
-     "login_subtitle": "Inicia sesi&#243;n para continuar",
-     "logging_in": "Iniciando sesi&#243;n...",
-                 "invalid_credentials": "Credenciales incorrectas. Verifica tu correo y contrase&#241;a",
+    "login_subtitle": "Inicia sesi&#243;n para continuar",
+    "logging_in": "Iniciando sesi&#243;n...",
+    "invalid_credentials": "Credenciales incorrectas. Verifica tu correo y contrase&#241;a"
   },
   "comparing": {
     "title": "RentNow vs Competencia",
