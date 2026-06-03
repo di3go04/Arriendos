@@ -482,9 +482,21 @@
     "guest_desc": "Accedi o crea un account per vedere le statistiche reali su propriet?, contratti e pagamenti.",
     "guest_cta": "Crea account"
   },
-  "testimonials": {
-    "badge": "Testimonianze",
-    "title_prefix": "Cosa dicono i nostri ",
-    "title_highlight": "utenti"
+  "faq": {
+    "badge": "FAQ",
+    "title": "Domande ",
+    "highlight": "frequenti",
+    "q1": "Come funziona il periodo di prova gratuito?",
+    "a1": "Registrati senza carta di credito e accedi al piano Base per un periodo illimitato. Quando hai bisogno di pi? funzionalit?, passa a Professionale o Azienda.",
+    "q2": "Posso cancellare il mio abbonamento in qualsiasi momento?",
+    "a2": "S?, cancella quando vuoi senza penali. Il tuo piano rimane attivo fino alla fine del periodo di fatturazione corrente.",
+    "q3": "Supportate multi-valuta e multi-lingua?",
+    "a3": "S?. Supporto per USD, COP, EUR, BRL e altro. La piattaforma ? disponibile in italiano, spagnolo, inglese, portoghese, francese e tedesco.",
+    "q4": "Cosa include la firma digitale dei contratti?",
+    "a4": "Firma elettronica con validit? legale. L'inquilino riceve un link, firma da qualsiasi dispositivo e il contratto viene archiviato in modo sicuro.",
+    "q5": "Come funzionano i pagamenti automatici?",
+    "a5": "Collega Mercado Pago o Stripe e programma addebiti ricorrenti. Gli inquilini ricevono promemoria automatici via email e SMS.",
+    "q6": "Offrite un'API per integrazioni personalizzate?",
+    "a6": "S?, la nostra API REST consente di integrare RentNow con i tuoi sistemi esistenti. Consulta la documentazione per sviluppatori."
   }
 }

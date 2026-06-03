@@ -482,9 +482,21 @@
     "guest_desc": "Sign in or create an account to see your real stats for properties, contracts, and payments.",
     "guest_cta": "Create account"
   },
-  "testimonials": {
-    "badge": "Testimonials",
-    "title_prefix": "What our ",
-    "title_highlight": "users say"
+  "faq": {
+    "badge": "FAQ",
+    "title": "Frequently asked ",
+    "highlight": "questions",
+    "q1": "How does the free trial work?",
+    "a1": "Sign up without a credit card and access the Basic plan indefinitely. Upgrade to Professional or Business when you need more features.",
+    "q2": "Can I cancel my subscription anytime?",
+    "a2": "Yes, cancel anytime with no penalties. Your plan stays active until the end of the current billing period.",
+    "q3": "Do you support multi-currency and multi-language?",
+    "a3": "Yes. Support for USD, COP, EUR, BRL and more. The platform is available in Spanish, English, Portuguese, French, German and Italian.",
+    "q4": "What does digital contract signing include?",
+    "a4": "Electronic signature with legal validity. The tenant receives a link, signs from any device and the contract is securely stored.",
+    "q5": "How do automatic payments work?",
+    "a5": "Connect Mercado Pago or Stripe and schedule recurring charges. Tenants receive automated email and SMS reminders.",
+    "q6": "Do you offer an API for custom integrations?",
+    "a6": "Yes, our REST API allows integrating RentNow with your existing systems. Check the developer documentation."
   }
 }

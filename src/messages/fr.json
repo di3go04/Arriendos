@@ -482,9 +482,21 @@
     "guest_desc": "Connectez-vous ou cr?ez un compte pour voir vos statistiques r?elles de propri?t?s, contrats et paiements.",
     "guest_cta": "Cr?er un compte"
   },
-  "testimonials": {
-    "badge": "T?moignages",
-    "title_prefix": "Ce que disent nos ",
-    "title_highlight": "utilisateurs"
+  "faq": {
+    "badge": "FAQ",
+    "title": "Questions ",
+    "highlight": "fr?quentes",
+    "q1": "Comment fonctionne la p?riode d'essai gratuite ?",
+    "a1": "Inscrivez-vous sans carte de cr?dit et acc?dez au plan Basique pour une dur?e illimit?e. Passez au plan Professionnel ou Entreprise quand vous avez besoin de plus de fonctionnalit?s.",
+    "q2": "Puis-je annuler mon abonnement ? tout moment ?",
+    "a2": "Oui, annulez quand vous voulez sans p?nalit?. Votre plan reste actif jusqu'? la fin de la p?riode de facturation en cours.",
+    "q3": "Proposez-vous le multi-devises et le multi-langue ?",
+    "a3": "Oui. Prise en charge USD, COP, EUR, BRL et plus. La plateforme est disponible en fran?ais, espagnol, anglais, portugais, allemand et italien.",
+    "q4": "Qu'est-ce que la signature num?rique des contrats inclut ?",
+    "a4": "Signature ?lectronique avec valeur l?gale. Le locataire re?oit un lien, signe depuis n'importe quel appareil et le contrat est stock? en toute s?curit?.",
+    "q5": "Comment fonctionnent les paiements automatiques ?",
+    "a5": "Connectez Mercado Pago ou Stripe et planifiez des pr?l?vements r?currents. Les locataires re?oivent des rappels automatis?s par email et SMS.",
+    "q6": "Proposez-vous une API pour des int?grations personnalis?es ?",
+    "a6": "Oui, notre API REST permet d'int?grer RentNow avec vos syst?mes existants. Consultez la documentation d?veloppeur."
   }
 }

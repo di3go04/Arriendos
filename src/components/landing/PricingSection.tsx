@@ -3,7 +3,7 @@
 import { useInView } from '@/hooks/useInView';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, CreditCard, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface Plan {
   nameKey: string;
@@ -77,11 +77,10 @@ function PlanCard({ plan, index, inView }: { plan: Plan; index: number; inView: 
       initial={reduce ? { opacity: 1 } : { opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: reduce ? 0 : index * 0.12, ease: 'easeOut' }}
-      className={`relative bg-white rounded-card overflow-hidden border ${
-        plan.popular
-          ? 'border-[#f5e0b]/30 ring-2 ring-[#f59e0b]/20 shadow-card-hover md:-mt-4 md:mb-4'
-          : 'border-[#e6edf5] shadow-card hover:shadow-card-hover hover:-translate-y-1'
-      } transition-all duration-300`}
+      className={`relative bg-white rounded-card overflow-hidden border ${plan.popular
+        ? 'border-[#f5e0b]/30 ring-2 ring-[#f59e0b]/20 shadow-card-hover md:-mt-4 md:mb-4'
+        : 'border-[#e6edf5] shadow-card hover:shadow-card-hover hover:-translate-y-1'
+        } transition-all duration-300`}
     >
       {plan.popular && (
         <div className="absolute top-0 right-0 bg-[#f59e0b] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl z-10">
@@ -116,11 +115,10 @@ function PlanCard({ plan, index, inView }: { plan: Plan; index: number; inView: 
 
         <a
           href={`/${locale}${plan.href}`}
-          className={`mt-6 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-bold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-            plan.popular
-              ? 'bg-[#1e3a5f] text-white hover:bg-[#152e4a] shadow-btn-hover'
-              : 'bg-[#f8fafc] text-[#1e293b] border border-[#e6edf5] hover:bg-[#e6edf5] shadow-card'
-          }`}
+          className={`mt-6 w-full flex items-center justify-center gap-2 py-3 px-5 text-sm font-bold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${plan.popular
+            ? 'bg-[#1e3a5f] text-white hover:bg-[#152e4a] shadow-btn-hover'
+            : 'bg-[#f8fafc] text-[#1e293b] border border-[#e6edf5] hover:bg-[#e6edf5] shadow-card'
+            }`}
         >
           {t(plan.ctaKey)}
           <ArrowRight className="w-4 h-4" />
@@ -133,6 +131,7 @@ function PlanCard({ plan, index, inView }: { plan: Plan; index: number; inView: 
 export function PricingSection() {
   const [ref, inView] = useInView<HTMLDivElement>({ threshold: 0.05, once: true });
   const t = useTranslations();
+  const locale = useLocale();
 
   return (
     <section ref={ref} id="pricing" className="relative py-20 md:py-28 bg-gradient-to-b from-white to-[#f8fafc]">
@@ -157,6 +156,27 @@ export function PricingSection() {
             <PlanCard key={plan.nameKey} plan={plan} index={i} inView={inView} />
           ))}
         </div>
+
+        {/* Trust badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex flex-wrap items-center justify-center gap-6 mt-12 pt-8 border-t border-[#e6edf5] max-w-2xl mx-auto"
+        >
+          <div className="flex items-center gap-2 text-xs text-[#64748b]">
+            <ShieldCheck className="w-4 h-4 text-[#4d7c0f]" />
+            {t('pricing.secure')}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#64748b]">
+            <CreditCard className="w-4 h-4 text-[#1e3a5f]" />
+            {t('pricing.cancel_anytime')}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#64748b]">
+            <Sparkles className="w-4 h-4 text-[#f59e0b]" />
+            {t('pricing.questions')} <a href={`/${locale}/support`} className="text-[#1e3a5f] underline hover:text-[#f59e0b]">{t('pricing.request_demo')}</a>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

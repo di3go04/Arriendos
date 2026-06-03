@@ -482,9 +482,21 @@
     "guest_desc": "Melden Sie sich an oder erstellen Sie ein Konto, um echte Statistiken zu Immobilien, Vertr?gen und Zahlungen zu sehen.",
     "guest_cta": "Konto erstellen"
   },
-  "testimonials": {
-    "badge": "Erfahrungsberichte",
-    "title_prefix": "Was unsere ",
-    "title_highlight": "Nutzer sagen"
+  "faq": {
+    "badge": "FAQ",
+    "title": "H?ufig gestellte ",
+    "highlight": "Fragen",
+    "q1": "Wie funktioniert die kostenlose Testphase?",
+    "a1": "Melden Sie sich ohne Kreditkarte an und nutzen Sie den Basisplan unbegrenzt. Upgrade auf Professional oder Business, wenn Sie mehr Funktionen ben?tigen.",
+    "q2": "Kann ich mein Abonnement jederzeit k?ndigen?",
+    "a2": "Ja, k?ndigen Sie jederzeit ohne Strafgeb?hren. Ihr Plan bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.",
+    "q3": "Unterst?tzen Sie mehrere W?hrungen und Sprachen?",
+    "a3": "Ja. Unterst?tzung f?r USD, COP, EUR, BRL und mehr. Die Plattform ist verf?gbar auf Deutsch, Spanisch, Englisch, Portugiesisch, Franz?sisch und Italienisch.",
+    "q4": "Was beinhaltet die digitale Vertragsunterschrift?",
+    "a4": "Elektronische Unterschrift mit Rechtsg?ltigkeit. Der Mieter erh?lt einen Link, unterschreibt von jedem Ger?t und der Vertrag wird sicher gespeichert.",
+    "q5": "Wie funktionieren automatische Zahlungen?",
+    "a5": "Verbinden Sie Mercado Pago oder Stripe und planen Sie wiederkehrende Abbuchungen. Mieter erhalten automatisierte Erinnerungen per E-Mail und SMS.",
+    "q6": "Bieten Sie eine API f?r individuelle Integrationen an?",
+    "a6": "Ja, unsere REST API erm?glicht die Integration von RentNow in Ihre bestehenden Systeme. Lesen Sie die Entwicklerdokumentation."
   }
 }

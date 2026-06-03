@@ -5,7 +5,7 @@ import { FeaturesSection } from '@/components/landing/FeaturesSection';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { StatsSection } from '@/components/landing/StatsSection';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
+import { FAQSection } from '@/components/landing/FAQSection';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLocale, useTranslations } from 'next-intl';
 import { ChevronRight } from 'lucide-react';
@@ -62,8 +62,8 @@ export default function LocaleHomePage() {
       <FeaturesSection />
       <ComparativaSection />
       <PricingSection />
-      <TestimonialsSection />
       <StatsSection />
+      <FAQSection />
 
       <section className="bg-gradient-to-r from-[#1e3a5f] to-[#152e4a] py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-5 md:px-8 text-center">
