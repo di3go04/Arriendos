@@ -71,11 +71,11 @@
     "title": "Contracts",
     "use_template": "Use Template"
   },
-  "cta": {
-    "button": "Get started now",
-    "subtitle": "Join professionals who have already optimized their administration with Rentnow.",
-    "title": "Ready to simplify your rental management?"
-  },
+    "cta": {
+      "button": "Get started now",
+      "subtitle": "Join professionals who have already optimized their administration with RentNow.",
+      "title": "Ready to simplify your rental management?"
+    },
   "dashboard": {
     "all_clear": "All clear!",
     "export_csv": "Export Report to CSV",

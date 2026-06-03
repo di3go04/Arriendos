@@ -100,8 +100,8 @@ const notoSansHebrew = Noto_Sans_Hebrew({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://rentnow.app'),
   title: {
-    default: 'Rentnow | Gestión Profesional de Arrendamientos',
-    template: '%s | Rentnow',
+    default: 'RentNow | Gestión Profesional de Arrendamientos',
+    template: '%s | RentNow',
   },
   description:
     'Plataforma profesional para la gestión de arrendamientos, contratos, pagos e inquilinos.',

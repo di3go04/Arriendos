@@ -72,11 +72,11 @@
     "title": "Contratos",
     "use_template": "Usar Plantilla"
   },
-  "cta": {
-    "button": "Comenzar ahora",
-    "subtitle": "&Uacute;nete a profesionales que ya optimizaron su administraci&oacute;n con Rentnow.",
-    "title": "&iquest;Listo para simplificar tu gesti&oacute;n de arriendos?"
-  },
+    "cta": {
+      "button": "Comenzar ahora",
+      "subtitle": "&Uacute;nete a profesionales que ya optimizaron su administraci&oacute;n con RentNow.",
+      "title": "&iquest;Listo para simplificar tu gesti&oacute;n de arriendos?"
+    },
   "dashboard": {
     "all_clear": "¡Todo al día!",
     "export_csv": "Exportar Reporte a CSV",
