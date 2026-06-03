@@ -50,10 +50,12 @@ export default function ConfiguracionSistemaPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user?.email) setTestEmail(user.email);
   }, [user?.email]);
 

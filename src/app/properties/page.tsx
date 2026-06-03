@@ -88,6 +88,7 @@ export default function PropertiesPage() {
     if (user) {
       fetchProperties();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -96,7 +97,7 @@ export default function PropertiesPage() {
     }
   }, [isLoading]);
 
-  const fetchProperties = async () => {
+  async function fetchProperties() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase

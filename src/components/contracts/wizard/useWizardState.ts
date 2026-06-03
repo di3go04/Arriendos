@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Property, Profile, ContractTemplate } from '@/types';
 
@@ -30,7 +30,7 @@ export interface WizardState {
   contractNumber: string;
 }
 
-export function useWizardState(user: any, profile: any) {
+export function useWizardState(user: { id: string; email?: string | null } | null, profile: { full_name?: string | null; email?: string | null } | null) {
   const [state, setState] = useState<WizardState>({
     step: 1,
     properties: [],
@@ -61,6 +61,7 @@ export function useWizardState(user: any, profile: any) {
 
   // Prefill
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     set({ startDate: new Date().toISOString().split('T')[0], contractNumber: `CON-${Date.now().toString().slice(-6)}` });
   }, []);
 
@@ -88,6 +89,7 @@ export function useWizardState(user: any, profile: any) {
     if (state.selectedProperty && state.startDate) {
       const end = new Date(state.startDate);
       end.setFullYear(end.getFullYear() + 1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       set({ endDate: end.toISOString().split('T')[0] });
     }
   }, [state.selectedProperty, state.startDate]);
@@ -95,6 +97,7 @@ export function useWizardState(user: any, profile: any) {
   // Debounced tenant search
   useEffect(() => {
     if (state.tenantMode !== 'search' || !state.tenantSearchQuery.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       set({ tenantResults: [] }); return;
     }
     const timer = setTimeout(async () => {

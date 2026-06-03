@@ -24,11 +24,12 @@ export default function TenantsPage() {
 
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/immutability
       fetchTenants();
     }
   }, [user]);
 
-  const fetchTenants = async () => {
+  async function fetchTenants() {
     setIsLoading(true);
     try {
       // Query profiles of type 'arrendatario' joining their contracts history

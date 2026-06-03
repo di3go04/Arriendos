@@ -84,6 +84,7 @@ export default function TenantDashboard() {
       }
     };
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const pendingContracts = contracts.filter(

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     // Format rows to match the properties table
-    const propertiesToInsert = rows.map((row: any) => ({
+    const propertiesToInsert = rows.map((row: Record<string, string | undefined>) => ({
       owner_id: user.id,
       title: row.titulo || row.title || row.nombre || 'Propiedad Importada',
       address: row.direccion || row.address || 'Sin dirección',
@@ -50,10 +50,10 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ message: 'Importación exitosa', inserted: data.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Import CSV error:', error);
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
     );
   }

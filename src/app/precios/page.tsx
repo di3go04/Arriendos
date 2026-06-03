@@ -30,7 +30,7 @@ export default function PreciosPage() {
 
     try {
       if (planId === 'basico') {
-        window.location.href = '/register?plan=basico';
+        window.location.assign('/register?plan=basico');
         return;
       }
 
@@ -44,16 +44,16 @@ export default function PreciosPage() {
 
       if (!res.ok) {
         if (res.status === 401) {
-          window.location.href = '/login?redirect=/precios';
+          window.location.assign('/login?redirect=/precios');
           return;
         }
         throw new Error(data.error || 'Error al iniciar checkout');
       }
 
       if (data.init_point) {
-        window.location.href = data.init_point;
+        window.location.assign(data.init_point);
       } else if (data.sandbox_init_point) {
-        window.location.href = data.sandbox_init_point;
+        window.location.assign(data.sandbox_init_point);
       }
     } catch (err: unknown) {
       setError((err as { message?: string }).message || 'Error al procesar el pago');

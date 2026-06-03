@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 
-export const generateExcel = async (data: any[]) => {
+export const generateExcel = async (data: Record<string, unknown>[]) => {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Reporte");
     if (data.length === 0) return "";

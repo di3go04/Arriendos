@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ clientSecret, paymentIntentId });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Error desconocido' }, { status: 500 });
   }
 }

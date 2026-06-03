@@ -119,9 +119,11 @@ export default function DashboardPage() {
           payments = payments.filter(p => p.contract?.property?.id === selectedPropertyId);
         }
         
+        /* eslint-disable react-hooks/immutability */
         calculateMetrics(payments);
         processChartData(payments);
         categorizePayments(payments);
+        /* eslint-enable react-hooks/immutability */
 
       } catch (err) {
         console.error('Error fetching dashboard statistics:', err);
@@ -131,9 +133,10 @@ export default function DashboardPage() {
     };
 
     loadDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile, selectedPropertyId, selectedPeriod]);
 
-  const calculateMetrics = (payments: LooseRecord[]) => {
+  function calculateMetrics(payments: LooseRecord[]) {
     const today = new Date();
     
     let filtered = payments;
@@ -179,7 +182,7 @@ export default function DashboardPage() {
     });
   };
 
-  const processChartData = (payments: LooseRecord[]) => {
+  function processChartData(payments: LooseRecord[]) {
     const monthlyGroups: { [month: string]: { [propName: string]: number } } = {};
     const propertyNames = new Set<string>();
 
@@ -219,7 +222,7 @@ export default function DashboardPage() {
     setChartData(data);
   };
 
-  const categorizePayments = (payments: LooseRecord[]) => {
+  function categorizePayments(payments: LooseRecord[]) {
     const today = new Date();
     
     const upcoming = payments

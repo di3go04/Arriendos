@@ -81,12 +81,6 @@ export default function PropertyDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  useEffect(() => {
-    if (id) {
-      fetchPropertyDetails();
-    }
-  }, [id]);
-
   const fetchPropertyDetails = async () => {
     setIsLoading(true);
     try {
@@ -106,6 +100,14 @@ export default function PropertyDetailPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchPropertyDetails();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleOpenEditModal = () => {
     if (!property) return;

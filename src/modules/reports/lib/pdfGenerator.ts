@@ -3,7 +3,7 @@ import pdfFonts from "pdfmake/build/vfs_fonts";
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-export const generatePDF = (data: any[]) => {
+export const generatePDF = (data: Record<string, unknown>[]) => {
     const docDefinition = {
         content: [
             { text: "Reporte", style: "header" },

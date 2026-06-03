@@ -28,6 +28,7 @@ export default function LoginPage() {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'auth-failed') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setErrorMsg('Error al iniciar sesión con Google. Intenta de nuevo.');
     }
   }, [searchParams]);

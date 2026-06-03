@@ -213,9 +213,10 @@ export default function TemplatesPage() {
     if (user) {
       fetchTemplates();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const fetchTemplates = async () => {
+  async function fetchTemplates() {
     setIsLoading(true);
     try {
       const { data, error } = await supabase

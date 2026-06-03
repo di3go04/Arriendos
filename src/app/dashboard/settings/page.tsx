@@ -31,6 +31,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFullName(profile.full_name || '');
       setPhone(profile.phone || '');
       setPreferredCurrency(profile.preferred_currency || 'COP');

@@ -25,7 +25,7 @@ export function usePaymentsRealtime(
           schema: 'public',
           table: 'payments',
         },
-        async (payload) => {
+        async () => {
           // Refetch payments after any change to keep UI in sync
           try {
             let query = supabase.from('payments').select('*').order('due_date', { ascending: false });

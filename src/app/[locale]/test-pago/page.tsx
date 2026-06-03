@@ -21,7 +21,7 @@ export default function TestPagoPage() {
             // For mock we just confirm immediately
             if (method === 'mercadopago') {
                 // Simulate confirmation
-                await (adapter as any).confirmPayment(paymentIntentId);
+                await (adapter as unknown as { confirmPayment: (id: string | null) => Promise<unknown> }).confirmPayment(paymentIntentId);
                 setStatus('success');
                 return;
             }

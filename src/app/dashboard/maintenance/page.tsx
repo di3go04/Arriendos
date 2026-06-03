@@ -55,9 +55,10 @@ export default function MaintenancePage() {
     if (user) {
       fetchIssuesAndProperties();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const fetchIssuesAndProperties = async () => {
+  async function fetchIssuesAndProperties() {
     setIsLoading(true);
     try {
       // 1. Fetch properties

@@ -45,14 +45,14 @@ export class PayPalMockAdapter implements IPaymentGateway {
         };
     }
 
-    async verifyWebhook(event: any): Promise<boolean> {
+    async verifyWebhook(event: Record<string, unknown>): Promise<boolean> {
         // Accept any event that contains a known PayPal webhook type
         const allowed = [
             "PAYMENT.CAPTURE.COMPLETED",
             "PAYMENT.CAPTURE.DENIED",
             "PAYMENT.CAPTURE.PENDING",
         ];
-        return allowed.includes(event?.event_type);
+        return allowed.includes((event as Record<string, unknown>)?.event_type as string);
     }
 
     private randomStatus(): PaymentStatus {

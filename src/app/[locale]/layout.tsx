@@ -18,7 +18,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  if (!locales.includes(locale as any)) notFound();
+  if (!locales.includes(locale as typeof locales[number])) notFound();
 
   const messages = await getMessages(locale);
 

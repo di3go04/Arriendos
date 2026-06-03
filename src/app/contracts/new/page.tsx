@@ -9,14 +9,12 @@ import { formatCOP } from '@/lib/format';
 import confetti from 'canvas-confetti';
 import {
   Building2, User, FileText, ClipboardCheck, PenSquare,
-  Check, ChevronRight, ChevronLeft, Search, Plus, Mail, Phone,
-  Calendar, DollarSign, MapPin, Home, Store, Briefcase, TreePine,
-  Loader2, AlertTriangle, ArrowLeft, Sparkles, X, Download,
-  Send, Eye, Copy, CheckCircle2, Camera, Monitor, Globe, Lock,
-  Hash, FileSignature, Clock, ChevronDown
+  Check, ChevronRight, ChevronLeft, Search,
+  Home, Store, Briefcase, TreePine,
+  Loader2, AlertTriangle, X,
+  Send, CheckCircle2
 } from 'lucide-react';
 import BottomNav from '@/components/shared/BottomNav';
-import Navbar from '@/components/shared/Navbar';
 import Sidebar from '@/components/shared/Sidebar';
 import BackToHome from '@/components/shared/BackToHome';
 import { useWizardState, STEPS, TYPE_ICONS } from '@/components/contracts/wizard/useWizardState';
@@ -31,7 +29,6 @@ export default function NewContractWizard() {
   const { user, profile } = useAuth();
   const { state, set, compileTemplate, canGoNext, hasSubmitErrors } = useWizardState(user, profile);
 
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -128,14 +125,12 @@ export default function NewContractWizard() {
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       set({ isSubmitting: false });
       setTimeout(() => router.push(`/contracts/${contract.id}`), 2000);
-    } catch (err: any) {
-      set({ errorMsg: err.message || 'Error al crear contrato', isSubmitting: false });
+    } catch (err: unknown) {
+      set({ errorMsg: err instanceof Error ? err.message : 'Error al crear contrato', isSubmitting: false });
     }
   };
 
   if (!user || !profile) return <Loader2 className="w-6 h-6 animate-spin" />;
-
-  const StepIcon = iconMap[STEPS[state.step - 1]?.icon || 'FileText'];
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -250,7 +245,7 @@ export default function NewContractWizard() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground">{t.full_name}</p>
-                          <p className="text-[11px] text-muted-foreground">{(t as any).email || 'Sin email'}</p>
+                          <p className="text-[11px] text-muted-foreground">{(t as { email?: string }).email || 'Sin email'}</p>
                         </div>
                         {state.selectedTenant?.id === t.id && <Check className="w-5 h-5 text-primary ml-auto" />}
                       </div>
@@ -314,11 +309,11 @@ export default function NewContractWizard() {
                             </div>
                             <div>
                               <p className="text-sm font-bold text-foreground">{t.name}</p>
-                              <p className="text-[11px] text-muted-foreground">{(t as any).description || ''}</p>
+                              <p className="text-[11px] text-muted-foreground">{(t as { description?: string }).description || ''}</p>
                             </div>
                             {state.selectedTemplate?.id === t.id && <Check className="w-5 h-5 text-primary ml-auto" />}
                           </div>
-                          {(t as any).is_public && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Pública</span>}
+                          {(t as { is_public?: boolean }).is_public && <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Pública</span>}
                         </button>
                       ))}
                     </div>

@@ -1,4 +1,4 @@
-import { IPaymentGateway, PaymentResult, PaymentStatus } from "@/lib/payment/types";
+import { IPaymentGateway, PaymentResult } from "@/lib/payment/types";
 
 const API_URL = "https://api.lemonsqueezy.com/v1";
 
@@ -54,7 +54,7 @@ export class LemonSqueezyAdapter implements IPaymentGateway {
         };
     }
 
-    async verifyWebhook(event: any): Promise<boolean> {
+    async verifyWebhook(): Promise<boolean> {
         return true;
     }
 }

@@ -21,6 +21,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>({
     if (!el) return;
 
     if (typeof IntersectionObserver === 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInView(true);
       return;
     }

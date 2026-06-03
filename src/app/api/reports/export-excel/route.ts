@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     // Fetch landlord properties to ensure we match only owned properties if needed
-    const { data: properties } = await supabase
+    await supabase
       .from('properties')
       .select('id, title')
       .eq('owner_id', user.id);
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     };
 
     // Calculate sum by categories
-    const totalByCategory = (expenses || []).reduce((acc: Record<string, number>, e: any) => {
+    const totalByCategory = (expenses || []).reduce((acc: Record<string, number>, e: { category: string; amount: number }) => {
       acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
       return acc;
     }, {});
@@ -194,8 +194,8 @@ export async function GET(req: Request) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating Excel:', error);
-    return NextResponse.json({ error: error.message || 'Error al exportar Excel' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Error al exportar Excel' }, { status: 500 });
   }
 }

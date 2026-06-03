@@ -43,9 +43,9 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const headerLocale = headerStore.get('x-locale');
   const cookieLocale = cookieStore.get('RentNow_locale')?.value;
-  const locale = locales.includes(headerLocale as any)
+  const locale = locales.includes(headerLocale as typeof locales[number])
     ? headerLocale!
-    : locales.includes(cookieLocale as any)
+    : locales.includes(cookieLocale as typeof locales[number])
       ? cookieLocale!
       : defaultLocale;
   const messages = await getMessages(locale);

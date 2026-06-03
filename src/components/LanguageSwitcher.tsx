@@ -48,7 +48,7 @@ export default function LanguageSwitcher({ currentLocale }: Props) {
   const languageLinks = useMemo(() => locales.map((loc) => {
     const segments = pathname.split('/');
     const firstSegment = segments[1];
-    const hasLocale = locales.includes(firstSegment as any);
+    const hasLocale = locales.includes(firstSegment as typeof locales[number]);
 
     if (hasLocale) {
       const newSegments = [...segments];

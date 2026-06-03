@@ -17,8 +17,6 @@ interface StripeCheckoutButtonProps {
 
 export function StripeCheckoutButton({
   planId,
-  planName,
-  amountUsd,
   label,
   variant = 'primary',
   customerEmail: forcedEmail,

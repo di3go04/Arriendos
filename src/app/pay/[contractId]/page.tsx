@@ -7,8 +7,8 @@ import { Loader2, CheckCircle, AlertTriangle, CreditCard, Building2 } from 'luci
 
 export default function PayContractPage() {
   const { contractId } = useParams();
-  const [contract, setContract] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
+  const [contract, setContract] = useState<Record<string, unknown> | null>(null);
+  const [property, setProperty] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
@@ -26,8 +26,8 @@ export default function PayContractPage() {
         if (ce || !c) throw new Error('Contrato no encontrado');
         setContract(c);
         setProperty(c.property);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
         setLoading(false);
       }
@@ -40,12 +40,13 @@ export default function PayContractPage() {
       const res = await fetch('/api/payments/create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractId, amount: contract.monthly_rent, description: `Pago de renta - ${property?.title || ''}` }),
+        body: JSON.stringify({ contractId, amount: (contract as Record<string, unknown>)?.monthly_rent, description: `Pago de renta - ${(property as Record<string, unknown>)?.title || ''}` }),
       });
-      const data = await res.json();
-      if (data.init_point) {
-        setMpLink(data.init_point);
-        window.open(data.init_point, '_blank');
+      const data: Record<string, unknown> = await res.json();
+      const initPoint = data.init_point as string | undefined;
+      if (initPoint) {
+        setMpLink(initPoint);
+        window.open(initPoint, '_blank');
         setPaid(true);
       } else {
         setError('Error al generar el pago');
@@ -85,17 +86,17 @@ export default function PayContractPage() {
         <div className="bg-muted/30 rounded-xl p-4 mb-6 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Propiedad</span>
-            <span className="font-semibold text-foreground">{property?.title || '—'}</span>
+            <span className="font-semibold text-foreground">{(property as Record<string, unknown>)?.title as string || '—'}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Monto</span>
             <span className="font-bold text-foreground tabular-nums">
-              ${Number(contract?.monthly_rent || 0).toLocaleString('es-CO')} COP
+              ${Number((contract as Record<string, unknown>)?.monthly_rent || 0).toLocaleString('es-CO')} COP
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Contrato</span>
-            <span className="font-semibold text-foreground">#{contract?.contract_number || contractId?.toString().slice(0, 8)}</span>
+            <span className="font-semibold text-foreground">#{(contract as Record<string, unknown>)?.contract_number as string || (contractId as string)?.toString().slice(0, 8)}</span>
           </div>
         </div>
 

@@ -18,7 +18,6 @@ export default function SignatureModal({
   onClose,
   contractId,
   contractTitle,
-  contractContent,
   onSignedSuccess
 }: SignatureModalProps) {
   const [signing, setSigning] = useState(false);
@@ -161,9 +160,9 @@ export default function SignatureModal({
         setHasDrawn(false);
       }, 3000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Error inesperado al firmar el contrato.');
+      setError(err instanceof Error ? err.message : 'Error inesperado al firmar el contrato.');
     } finally {
       setSigning(false);
     }

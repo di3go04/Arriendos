@@ -151,6 +151,7 @@ export default function LandlordDashboard() {
       }
     };
     fetchDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   if (loading) {

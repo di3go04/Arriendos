@@ -28,7 +28,14 @@ export default function SwaggerPage() {
       presetScript.onload = () => {
         // Initialize Swagger UI Bundle once all loaded
         try {
-          const win = window as any;
+          interface SwaggerWindow {
+            SwaggerUIBundle: {
+              (config: Record<string, unknown>): void;
+              presets: { apis: unknown };
+            };
+            SwaggerUIStandalonePreset: unknown;
+          }
+          const win = window as unknown as SwaggerWindow;
           if (win.SwaggerUIBundle) {
             win.SwaggerUIBundle({
               url: '/openapi.json',

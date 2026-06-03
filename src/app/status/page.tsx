@@ -60,7 +60,8 @@ export default function StatusPage() {
     }
   };
 
-  useEffect(() => { fetchHealth(); }, []);
+  useEffect(() => { // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchHealth(); }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0F172A]">

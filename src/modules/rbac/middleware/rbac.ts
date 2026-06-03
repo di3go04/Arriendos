@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { can } from "../lib/rbac";
+import { can, type Role } from "../lib/rbac";
 
 export function middleware(request: NextRequest) {
-    const role = request.cookies.get("role")?.value as any;
+    const role = request.cookies.get("role")?.value as Role;
     const pathname = request.nextUrl.pathname;
 
     const permissionMap: Record<string, string> = {

@@ -20,6 +20,7 @@ export function SmartInput({ value, onChange, formatType = 'currency', label, re
     if (formatType === 'currency') {
       const num = Number(value.toString().replace(/\D/g, ''));
       if (num > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayValue(`$ ${num.toLocaleString('es-CO')}`);
         setIsValid(true);
       } else {

@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, CircleDashed, DollarSign, Hammer, Layers, Sparkles } from 'lucide-react';
+import { CheckCircle2, DollarSign, Hammer, Layers, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface ImprovementRow {

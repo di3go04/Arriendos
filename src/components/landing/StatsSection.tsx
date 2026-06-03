@@ -51,6 +51,7 @@ function AnimatedStatValue({ value, inView: isVisible }: { value: number; inView
 
   useEffect(() => {
     if (!isVisible || reduce) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplay(value);
       return;
     }
@@ -88,6 +89,7 @@ export function StatsSection() {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetch('/api/stats')
       .then((r) => r.json())

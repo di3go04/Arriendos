@@ -15,7 +15,7 @@ export class StripeAdapter implements PaymentAdapter {
     async createPaymentIntent(
         amount: number,
         currency: string = 'usd',
-        metadata?: Record<string, any>
+        metadata?: Record<string, unknown>
     ): Promise<{
         clientSecret: string;
         paymentIntentId?: string;
@@ -26,7 +26,7 @@ export class StripeAdapter implements PaymentAdapter {
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: Math.round(amount * 100),
                 currency,
-                metadata: metadata || {},
+                metadata: (metadata || {}) as Stripe.MetadataParam,
                 automatic_payment_methods: { enabled: true },
             });
 
@@ -35,12 +35,12 @@ export class StripeAdapter implements PaymentAdapter {
                 paymentIntentId: paymentIntent.id,
                 success: true,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return {
                 clientSecret: '',
                 paymentIntentId: undefined,
                 success: false,
-                error: error.message || 'Error creating payment intent',
+                error: error instanceof Error ? error.message : 'Error creating payment intent',
             };
         }
     }
@@ -69,19 +69,19 @@ export class StripeAdapter implements PaymentAdapter {
             });
 
             const invoice = subscription.latest_invoice;
-            const paymentIntent = (invoice as any).payment_intent;
+            const paymentIntent = (invoice as { payment_intent?: { client_secret?: string } }).payment_intent;
 
             return {
                 subscriptionId: subscription.id,
-                clientSecret: (paymentIntent as any)?.client_secret || '',
+                clientSecret: paymentIntent?.client_secret || '',
                 success: true,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return {
                 subscriptionId: undefined,
                 clientSecret: '',
                 success: false,
-                error: error.message || 'Error creating subscription',
+                error: error instanceof Error ? error.message : 'Error creating subscription',
             };
         }
     }
@@ -107,15 +107,15 @@ export class StripeAdapter implements PaymentAdapter {
                 currency: intent.currency,
                 status: intent.status as PaymentIntent['status'],
                 clientSecret: intent.client_secret || '',
-                metadata: intent.metadata as Record<string, any>,
+                metadata: intent.metadata as Record<string, unknown>,
                 paymentMethod: intent.payment_method
                     ? {
                         id: intent.payment_method as string,
                         type: 'card' as const,
-                        brand: (intent.payment_method as any).card?.brand,
-                        last4: (intent.payment_method as any).card?.last4,
-                        expMonth: (intent.payment_method as any).card?.exp_month,
-                        expYear: (intent.payment_method as any).card?.exp_year,
+                        brand: (intent.payment_method as unknown as { card?: { brand?: string } }).card?.brand,
+                        last4: (intent.payment_method as unknown as { card?: { last4?: string } }).card?.last4,
+                        expMonth: (intent.payment_method as unknown as { card?: { exp_month?: number } }).card?.exp_month,
+                        expYear: (intent.payment_method as unknown as { card?: { exp_year?: number } }).card?.exp_year,
                     }
                     : undefined,
             };
@@ -140,8 +140,8 @@ export class StripeAdapter implements PaymentAdapter {
                 id: sub.id,
                 status: mappedStatus,
                 planId: sub.items.data[0]?.price.id || '',
-                currentPeriodEnd: new Date((sub as any).current_period_end * 1000),
-                cancelAtPeriodEnd: (sub as any).cancel_at_period_end,
+                currentPeriodEnd: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000),
+                cancelAtPeriodEnd: (sub as unknown as { cancel_at_period_end: boolean }).cancel_at_period_end,
             };
         } catch {
             return null;

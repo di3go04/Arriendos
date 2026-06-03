@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     const startDate = startOfYear(new Date(year, 0));
     const endDate = endOfYear(new Date(year, 0));
 
-    let paymentQuery = supabase
+    const paymentQuery = supabase
       .from('payments')
       .select('amount, paid, due_date, paid_at, contract_id')
       .in('contract_id', contractIds)

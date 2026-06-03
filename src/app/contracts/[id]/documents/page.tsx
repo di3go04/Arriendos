@@ -70,9 +70,10 @@ export default function ContractDocumentsPage() {
   useEffect(() => {
     if (!params?.id || !user || !profile) return;
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, user, profile]);
 
-  const fetchData = async () => {
+  async function fetchData() {
     if (!user || !profile) return;
     setLoading(true);
     try {

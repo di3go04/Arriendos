@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
                     widths: ["*"],
                     body: [
                         [{ text: "Datos", style: "tableHeader" }],
-                        ...data.map((d: any) => [{ text: JSON.stringify(d) }]),
+                        ...data.map((d: Record<string, unknown>) => [{ text: JSON.stringify(d) }]),
                     ],
                 },
             },

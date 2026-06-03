@@ -97,8 +97,9 @@ function DemoContent() {
   const eventId = useRef(4);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCounters({ pageEvents: periodData.pageEvents, activeUsers: periodData.activeUsers, conversionRate: periodData.conversionRate });
-  }, [selectedPeriod]);
+  }, [selectedPeriod, periodData.pageEvents, periodData.activeUsers, periodData.conversionRate]);
 
   useEffect(() => {
     const interval = setInterval(() => {

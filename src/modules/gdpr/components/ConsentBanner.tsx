@@ -6,12 +6,13 @@ import { useToast } from "@/components/ui/Toast";
 
 export const ConsentBanner = () => {
     const [visible, setVisible] = useState(false);
-    const [consent, setLocalConsent] = useState(getConsent());
+    const [, setLocalConsent] = useState(getConsent());
     const { toast } = useToast();
 
     useEffect(() => {
         const stored = localStorage.getItem("gdpr_consent");
-        if (!stored) setVisible(true);
+        if (!stored) // eslint-disable-next-line react-hooks/set-state-in-effect
+            setVisible(true);
     }, []);
 
     const accept = () => {

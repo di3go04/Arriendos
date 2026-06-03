@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
 
     // Rewrite locale-prefixed static files to root
     const segments = pathname.split('/').filter(Boolean);
-    if (segments.length > 1 && locales.includes(segments[0] as any)) {
+    if (segments.length > 1 && locales.includes(segments[0] as typeof locales[number])) {
         const restPath = '/' + segments.slice(1).join('/');
         if (
             restPath.startsWith('/_next/') ||
@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
         return secure(NextResponse.next());
     }
 
-    if (pathname !== '/' && !locales.includes(segments[0] as any)) {
+    if (pathname !== '/' && !locales.includes(segments[0] as typeof locales[number])) {
         return secure(NextResponse.next());
     }
 

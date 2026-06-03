@@ -76,23 +76,7 @@ export default function LeasesPage() {
   const [newDocUrl, setNewDocUrl] = useState('');
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
-  useEffect(() => {
-    if (user && profile) {
-      fetchContracts();
-      if (profile.role === 'arrendador') {
-        fetchCreationDependencies();
-      }
-    }
-  }, [user, profile]);
-
-  useEffect(() => {
-    if (viewingContract) {
-      fetchDocuments(viewingContract.id);
-      setActiveViewerTab('contract');
-    }
-  }, [viewingContract]);
-
-  const fetchContracts = async () => {
+  async function fetchContracts() {
     setIsLoading(true);
     try {
       let query = supabase.from('contracts').select(`
@@ -119,7 +103,18 @@ export default function LeasesPage() {
     }
   };
 
-  const fetchCreationDependencies = async () => {
+  useEffect(() => {
+    if (user && profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchContracts();
+      if (profile.role === 'arrendador') {
+        fetchCreationDependencies();
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile]);
+
+  async function fetchCreationDependencies() {
     try {
       // 1. Fetch properties owned by user that are "disponible"
       const { data: props } = await supabase
@@ -169,6 +164,15 @@ export default function LeasesPage() {
       setIsDocsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (viewingContract) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchDocuments(viewingContract.id);
+      setActiveViewerTab('contract');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewingContract]);
 
   // Upload custom document link
   const handleUploadDocument = async (e: React.FormEvent) => {

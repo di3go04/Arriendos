@@ -79,7 +79,8 @@ export function usePayments(user: LooseRecord | null, profile: LooseRecord | nul
     } finally { setLoading(false); }
   }, [user, profile, isLandlord]);
 
-  useEffect(() => { if (user && profile) fetchData(); }, [user, profile, fetchData]);
+  useEffect(() => { if (user && profile) // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData(); }, [user, profile, fetchData]);
 
   // Auto-notifications
   useEffect(() => {

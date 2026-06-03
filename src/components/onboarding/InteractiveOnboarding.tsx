@@ -23,6 +23,7 @@ export function InteractiveOnboarding({ steps, onComplete, storageKey = 'rentnow
   useEffect(() => {
     const completed = localStorage.getItem(storageKey);
     if (!completed && steps.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsVisible(true);
     }
   }, [steps.length, storageKey]);

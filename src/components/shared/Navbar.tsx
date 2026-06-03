@@ -231,6 +231,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   useEffect(() => {
     if (!user || !profile) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications();
     generateNotifications().then(() => fetchNotifications());
     intervalRef.current = setInterval(() => { fetchNotifications(); }, 300000);

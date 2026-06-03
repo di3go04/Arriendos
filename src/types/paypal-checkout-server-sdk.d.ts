@@ -8,6 +8,7 @@ declare module '@paypal/checkout-server-sdk' {
     }
     class PayPalHttpClient {
       constructor(environment: SandboxEnvironment | LiveEnvironment);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       execute(request: any): Promise<any>;
     }
   }
@@ -15,10 +16,12 @@ declare module '@paypal/checkout-server-sdk' {
     class OrdersCreateRequest {
       constructor();
       prefer(header: string): void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       requestBody(body: any): void;
     }
     class OrdersCaptureRequest {
       constructor(orderId: string);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       requestBody(body: any): void;
     }
   }

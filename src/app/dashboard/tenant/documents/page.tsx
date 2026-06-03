@@ -79,7 +79,7 @@ export default function TenantDocumentsPage() {
       if (!contractsErr && contractsData) {
         // For each contract, fetch signature audits if they exist
         const enrichedContracts = await Promise.all(
-          contractsData.map(async (c: any) => {
+          contractsData.map(async (c: ContractAuditDetail) => {
             const { data: audits } = await supabase
               .from('contract_signature_audit')
               .select('*')
@@ -102,7 +102,9 @@ export default function TenantDocumentsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDocsAndContracts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   if (loading) {

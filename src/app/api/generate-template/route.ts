@@ -171,7 +171,7 @@ Sigue estas reglas estrictas:
       paymentDay = paymentDayMatch[1];
     }
 
-    let isCommercial = lowercasePrompt.includes('comercial') || lowercasePrompt.includes('local') || lowercasePrompt.includes('oficina') || lowercasePrompt.includes('bodega') || lowercasePrompt.includes('negocio');
+    const isCommercial = lowercasePrompt.includes('comercial') || lowercasePrompt.includes('local') || lowercasePrompt.includes('oficina') || lowercasePrompt.includes('bodega') || lowercasePrompt.includes('negocio');
 
     let titleSuggested = 'Contrato de Arrendamiento con IA';
     let htmlContent = '';

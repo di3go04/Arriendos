@@ -80,6 +80,7 @@ export default function SignContractPage() {
       }
     };
     fetchContract();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, user]);
 
   // Init canvas
@@ -203,6 +204,7 @@ export default function SignContractPage() {
 
       // Upload signature
       if (signature) {
+        // eslint-disable-next-line react-hooks/purity
         const fileName = `signature_tenant_${contract.id}_${Date.now()}.png`;
         const { error: uploadErr } = await supabase.storage
           .from('contract-documents')

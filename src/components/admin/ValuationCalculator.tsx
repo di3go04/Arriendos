@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DollarSign, ShieldAlert, Sparkles, TrendingUp, HelpCircle, Activity, ClipboardCheck } from 'lucide-react';
+import { Sparkles, TrendingUp } from 'lucide-react';
 
 interface ValuationCalculatorProps {
   initialScore?: number;
@@ -51,6 +51,7 @@ export default function ValuationCalculator({ initialScore = 75 }: ValuationCalc
 
     // Boundary constraint
     mult = Math.max(1.5, Math.min(10, mult));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMultiplier(mult);
 
     // Calculate valuations

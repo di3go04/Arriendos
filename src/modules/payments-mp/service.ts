@@ -6,7 +6,7 @@ import {
 } from '@/lib/mercadopago';
 import { PRICING } from '@/config/payments';
 import { getSupabaseAdmin } from '@/modules/_kernel/supabase-admin';
-import type { IPaymentsMpService, ProcessCardPaymentInput } from './contract';
+import type { IPaymentsMpService } from './contract';
 
 export function createPaymentsMpService(): IPaymentsMpService {
   return {

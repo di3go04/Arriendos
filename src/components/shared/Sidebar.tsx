@@ -46,6 +46,20 @@ const menuItems = [
   { label: 'Configuración', icon: Settings, href: () => '/dashboard/settings' },
 ];
 
+function ThemeToggleButton({ collapsed }: { collapsed: boolean }) {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`flex items-center gap-2 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer flex-1 ${collapsed ? 'justify-center' : 'justify-center'}`}
+      title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+    >
+      {theme === 'dark' ? <Sun className="w-3.5 h-3.5 shrink-0" /> : <Moon className="w-3.5 h-3.5 shrink-0" />}
+      {!collapsed && <span>{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>}
+    </button>
+  );
+}
+
 export default function Sidebar({
   className = '',
   isOpenMobile = false,
@@ -58,20 +72,6 @@ export default function Sidebar({
   const filtered = menuItems.filter(item => !item.roles || item.roles.includes(profile?.role || ''));
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
-
-  function ThemeToggleButton({ collapsed }: { collapsed: boolean }) {
-    const { theme, toggleTheme } = useTheme();
-    return (
-      <button
-        onClick={toggleTheme}
-        className={`flex items-center gap-2 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer flex-1 ${collapsed ? 'justify-center' : 'justify-center'}`}
-        title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-      >
-        {theme === 'dark' ? <Sun className="w-3.5 h-3.5 shrink-0" /> : <Moon className="w-3.5 h-3.5 shrink-0" />}
-        {!collapsed && <span>{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>}
-      </button>
-    );
-  }
 
   return (
     <>

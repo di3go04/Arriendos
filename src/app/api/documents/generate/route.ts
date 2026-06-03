@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     // Obtener datos según el tipo de documento
-    let data: LooseRecord = {};
+    const data: LooseRecord = {};
 
     if (contractId) {
       const { data: contract } = await supabase

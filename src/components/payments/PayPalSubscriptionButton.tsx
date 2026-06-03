@@ -120,7 +120,7 @@ export default function PayPalSubscriptionButton({
                 setMessage('Error al confirmar suscripcion con PayPal');
               }
             }}
-            onError={(_err) => {
+            onError={() => {
               setStatus('error');
               setMessage('Error al procesar pago con PayPal');
             }}

@@ -45,14 +45,14 @@ export class MercadoPagoMockAdapter implements IPaymentGateway {
         };
     }
 
-    async verifyWebhook(event: any): Promise<boolean> {
+    async verifyWebhook(event: Record<string, unknown>): Promise<boolean> {
         const allowed = [
             "payment.created",
             "payment.succeeded",
             "payment.failed",
             "payment.pending",
         ];
-        return allowed.includes(event?.event);
+        return allowed.includes((event as Record<string, unknown>)?.event as string);
     }
 
     private randomStatus(): PaymentStatus {

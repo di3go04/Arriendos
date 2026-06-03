@@ -34,6 +34,7 @@ export default function LeadsPage() {
   useEffect(() => {
     if (!user) return;
     loadLeads();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function loadLeads() {
@@ -44,7 +45,7 @@ export default function LeadsPage() {
       .eq('owner_id', user!.id)
       .order('created_at', { ascending: false });
     if (data) {
-      setLeads(data.map((l: any) => ({
+      setLeads((data as (Lead & { properties?: { title?: string } })[]).map((l) => ({
         ...l,
         property_title: l.properties?.title || 'Sin propiedad',
       })));

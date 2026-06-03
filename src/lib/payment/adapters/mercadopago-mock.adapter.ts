@@ -5,8 +5,6 @@ export class MercadoPagoMockAdapter implements PaymentAdapter {
 
     async createPaymentIntent(
         amount: number,
-        currency: string = 'usd',
-        metadata?: Record<string, any>
     ): Promise<{
         clientSecret: string;
         paymentIntentId?: string;
@@ -35,9 +33,6 @@ export class MercadoPagoMockAdapter implements PaymentAdapter {
     }
 
     async createSubscription(
-        planId: string,
-        priceId: string,
-        customerEmail: string
     ): Promise<{
         subscriptionId?: string;
         clientSecret?: string;
@@ -56,7 +51,7 @@ export class MercadoPagoMockAdapter implements PaymentAdapter {
         };
     }
 
-    verifyWebhookSignature(payload: string, signature: string): boolean {
+    verifyWebhookSignature(): boolean {
         return true; // Mock always returns true
     }
 

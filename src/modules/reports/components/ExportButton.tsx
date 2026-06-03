@@ -5,10 +5,9 @@ import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 
 export const ExportButton = ({
-  data,
   type,
 }: {
-  data: any[];
+  data: Record<string, unknown>[];
   type: "pdf" | "excel";
 }) => {
   const [loading, setLoading] = useState(false);

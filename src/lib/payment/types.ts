@@ -7,7 +7,7 @@ export interface PaymentResult {
     currency: string;
     status: PaymentStatus;
     createdAt: string;
-    raw: any;
+    raw: Record<string, unknown>;
 }
 
 export interface PaymentIntent {
@@ -16,7 +16,7 @@ export interface PaymentIntent {
     currency: string;
     status: string;
     clientSecret: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     paymentMethod?: {
         id: string;
         type: 'card';
@@ -46,11 +46,11 @@ export interface IPaymentGateway {
     capturePayment(paymentId: string): Promise<PaymentResult>;
 
     /** Verify a webhook event */
-    verifyWebhook(event: any): Promise<boolean>;
+    verifyWebhook(event: Record<string, unknown>): Promise<boolean>;
 }
 
 export interface PaymentAdapter {
-    createPaymentIntent: (amount: number, currency?: string, metadata?: Record<string, any>) => Promise<{
+    createPaymentIntent: (amount: number, currency?: string, metadata?: Record<string, unknown>) => Promise<{
         clientSecret: string;
         paymentIntentId?: string;
         success: boolean;

@@ -1,7 +1,6 @@
 import type {
   IAuthEnterpriseService,
   LoginAttemptStatus,
-  RequestMeta,
   UserDevice,
 } from '@/modules/_kernel/contracts';
 import type { ModuleResult } from '@/modules/_kernel/types';

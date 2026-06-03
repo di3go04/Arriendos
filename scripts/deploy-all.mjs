@@ -13,7 +13,7 @@
 
 import { execSync } from 'child_process';
 import {
-  cpSync, existsSync, mkdirSync, readFileSync,
+  cpSync, existsSync, mkdirSync,
   rmSync, writeFileSync,
 } from 'fs';
 import { join, dirname, relative } from 'path';
@@ -62,7 +62,7 @@ function banner(msg) {
 
 const COMMIT_MSG = 'feat: rentnow software architecture updates and automated deployment pipeline';
 const ORIGIN_URL = 'https://github.com/di3go04/Arriendos.git';
-const GH_PAGES_BRANCH = 'gh-pages';
+
 
 // ===================================================================
 // BLOQUE 1: RESPALDO AUTOMÁTICO DE LA RAMA PRINCIPAL (MAIN)
@@ -232,7 +232,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   try {
     run('npm run build', { cwd: TEMP, env: { ...VERCEL_ENV, PATH: process.env.PATH } });
-  } catch (buildErr) {
+  } catch {
     console.error('\n  ✘ ERROR: La compilación falló. Revisá los mensajes de arriba.');
     console.error(`  → Podés inspeccionar ${relative(ROOT, TEMP)}/ para depurar.`);
     process.exit(1);
@@ -281,7 +281,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   try {
     run(`git push origin gh-pages --force`, { cwd: OUT_DEPLOY });
     console.log('\n  ✓ gh-pages actualizada en GitHub.');
-  } catch (pushErr) {
+  } catch {
     console.error('\n  ✘ ERROR: No se pudo pushear a gh-pages.');
     console.error('  → Verificá que tengas permisos de escritura en el repositorio.');
     process.exit(1);

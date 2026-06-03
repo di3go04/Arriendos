@@ -44,6 +44,7 @@ export default function ServiceHealthWidget() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchHealth();
   }, []);
 
@@ -55,17 +56,6 @@ export default function ServiceHealthWidget() {
         return <span className="w-2.5 h-2.5 rounded-full bg-destructive relative inline-flex" />;
       default:
         return <span className="w-2.5 h-2.5 rounded-full bg-amber-500 relative inline-flex" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'operational':
-        return <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">Activo</span>;
-      case 'degraded':
-        return <span className="text-[9px] font-bold uppercase tracking-wider text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">Error</span>;
-      default:
-        return <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">Sin Configurar</span>;
     }
   };
 
