@@ -27,7 +27,7 @@ export function ComparativaSection() {
             {t('comparing.heading_prefix')}<span className="text-[#f59e0b]">{t('comparing.heading_highlight')}</span>
           </h2>
           <p className="text-[#64748b] text-base md:text-lg leading-relaxed">
-            {t('features.subtitle')}
+            {t('comparing.subtitle')}
           </p>
         </div>
 

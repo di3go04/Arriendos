@@ -10,6 +10,7 @@
     "edit": "Editar",
     "filter": "Filtrar",
     "finish": "Finalizar",
+    "goto": "Ir a",
     "loading": "Cargando...",
     "next": "Siguiente",
     "retry": "Reintentar",
@@ -46,8 +47,7 @@
       "pwa": "Offline",
       "multiLang": "Multi-idioma",
       "free": "Gratuito"
-    },
-    "subtitle": "Descubre por qué miles de arrendadores eligen RentNow sobre la competencia."
+    }
   },
   "contracts": {
     "contract_number": "Contrato #",
@@ -81,6 +81,8 @@
     "all_clear": "¡Todo al día!",
     "export_csv": "Exportar Reporte a CSV",
     "filter_all": "Todas las Propiedades",
+    "income": "Ingresos Confirmados",
+    "filter_archived": "Propiedades Archivadas",
     "income": "Ingresos Confirmados",
     "leads_recent": "Leads Recientes",
     "monthly_income": "Ingresos Mensuales por Inmueble",
@@ -238,13 +240,8 @@
       "users": "Usuarios activos"
     },
     "subtitle": "Administra propiedades, contratos, pagos e inquilinos desde un solo lugar. Con IA predictiva y portal público.",
-    "title": "Gestiona tus arriendos 10x más rápido con IA",
-    "tagline": "Plataforma profesional de arrendamientos",
-    "benefits": {
-      "no_card": "Sin tarjeta de crédito",
-      "cancel_anytime": "Cancela en cualquier momento",
-      "multi_language": "Multi-idioma"
-    }
+    "title": "La plataforma inteligente para gestionar tus arriendos",
+    "tagline": "Plataforma profesional de arrendamientos"
   },
   "language": {
     "de": "Deutsch",
@@ -282,7 +279,7 @@
     "contact": "Contacto",
     "dashboard": "Panel",
     "developers": "Desarrolladores",
-    "features": "Funcionalidades",
+    "developers": "Desarrolladores",
     "home": "Inicio",
     "leases": "Contratos",
     "login": "Iniciar sesión",
@@ -332,7 +329,7 @@
     "new": "Registrar Pago",
     "no_payments": "No hay pagos registrados",
     "paid_at": "Pagado el",
-    "receipt": "Comprobante",
+    "receipt": "Recibo de Pago",
     "status_overdue": "Vencido",
     "status_paid": "Pagado",
     "status_pending": "Pendiente",
@@ -397,7 +394,6 @@
     "bedrooms": "Habitaciones",
     "create": "Crear propiedad",
     "delete": "Eliminar propiedad",
-    "deposit": "Depósito",
     "edit": "Editar propiedad",
     "filter": {
       "all": "Todas",
@@ -409,7 +405,7 @@
     },
     "gallery": "Galería de imágenes",
     "monthly": "/mes",
-    "no_properties": "Aún no tienes propiedades registradas",
+    "no_properties": "Aún no tienes propiedades registrados",
     "no_properties_desc": "Comienza registrando tu primera propiedad para empezar a gestionar tus arriendos.",
     "publish": "Publicar propiedad",
     "request_info": "Solicitar información",
@@ -454,7 +450,7 @@
     "currency": "Moneda preferida",
     "language": "Idioma",
     "notifications": "Notificaciones",
-    "payment_prefs": "Preferencias de Pago",
+    "payment_prefs": "Preferencias de Peso",
     "profile": "Mi Perfil",
     "save": "Guardar cambios",
     "saved": "Cambios guardados exitosamente",
@@ -483,7 +479,6 @@
     "payments_made": "Pagos Realizados",
     "pending_signature": "Pendientes de Firma",
     "rent": "Renta",
-    "review_sign": "Revisar y firmar",
     "title": "Mi Panel",
     "up_to_date": "Al día",
     "upcoming_payments": "Próximos Pagos"
