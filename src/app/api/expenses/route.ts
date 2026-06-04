@@ -65,7 +65,7 @@ export const GET = withErrorHandler(async (req: Request) => {
 
     let query = supabase
       .from('expenses')
-      .select('*, property:properties(title)')
+      .select('*')
       .eq('owner_id', user.id)
       .order('expense_date', { ascending: false });
 
@@ -219,7 +219,7 @@ export const GET = withErrorHandler(async (req: Request) => {
 
     let query = supabase
       .from('expenses')
-      .select('*, property:properties(title)')
+      .select('*')
       .eq('owner_id', user.id)
       .order('expense_date', { ascending: false });
 
