@@ -150,21 +150,21 @@
     "timeout": "La solicitud tardó demasiado. Intenta de nuevo.",
     "unauthorized": "No autorizado"
   },
-  "expenses": {
-    "amount": "Monto",
-    "category": "Categoría",
-    "date": "Fecha",
-    "description": "Descripción",
-    "insurance": "Seguros",
-    "maintenance": "Mantenimiento",
-    "new": "Nuevo Gasto",
-    "no_expenses": "No hay gastos registrados",
-    "other": "Otros",
-    "receipt": "Comprobante",
-    "taxes": "Impuestos",
-    "title": "Gastos",
-    "utilities": "Servicios Públicos"
-  },
+   "expenses": {
+     "amount": "Monto",
+     "category": "Categor\u00EDa",
+     "date": "Fecha",
+     "description": "Descripci\u00F3n",
+     "insurance": "Seguros",
+     "maintenance": "Mantenimiento",
+     "new": "Nuevo Gasto",
+     "no_expenses": "No hay gastos registrados",
+     "other": "Otros",
+     "receipt": "Comprobante",
+     "taxes": "Impuestos",
+     "title": "Gastos",
+     "utilities": "Servicios P\u00FAblicos"
+   },
   "faq": {
     "badge": "Preguntas Frecuentes",
     "title": "Resolvemos tus ",

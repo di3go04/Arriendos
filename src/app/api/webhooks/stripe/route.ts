@@ -1,41 +1,38 @@
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { handleStripeWebhook, isStripeConfigured } from '@/modules/stripe-payments';
+import Stripe from 'stripe';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-04-10',
+});
 
-/**
- * POST /api/webhooks/stripe
- * Webhook Stripe con body crudo y validación de firma (STRIPE_WEBHOOK_SECRET).
- *
- * Configurar en Stripe Dashboard → Developers → Webhooks:
- *   URL: https://tu-dominio.com/api/webhooks/stripe
- *   Eventos: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
- *
- * Desarrollo local: stripe listen --forward-to localhost:3000/api/webhooks/stripe
- */
 export async function POST(req: Request) {
+  const sig = req.headers.get('Stripe-Signature')!;
+  const buf = await req.text();
+  let event: Stripe.Event;
+
   try {
-    if (!isStripeConfigured()) {
-      return NextResponse.json({ error: 'Stripe no configurado' }, { status: 503 });
-    }
-
-    const rawBody = await req.text();
-    const headersList = await headers();
-    const signature = headersList.get('stripe-signature');
-
-    const result = await handleStripeWebhook(rawBody, signature);
-
-    if (!result.ok) {
-      const status = result.error?.includes('Firma') ? 400 : 500;
-      return NextResponse.json({ error: result.error }, { status });
-    }
-
-    return NextResponse.json({ received: true, type: result.eventType });
-  } catch (error: unknown) {
-    console.error('[POST /api/webhooks/stripe]', error);
-    const message = error instanceof Error ? error.message : 'Error en webhook';
-    return NextResponse.json({ error: message }, { status: 500 });
+    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (err: any) {
+    console.error('Webhook error:', err.message);
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
+
+  console.log('Received event:', event.type);
+
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log('Payment succeeded:', session.id);
+      break;
+
+    case 'payment_intent.succeeded':
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log('Payment succeeded:', paymentIntent.id);
+      break;
+
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
+  }
+
+  return NextResponse.json({ received: true });
 }
