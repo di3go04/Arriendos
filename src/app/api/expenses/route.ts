@@ -74,7 +74,10 @@ export const GET = withErrorHandler(async (req: Request) => {
     const { data: expenses, error } = await query;
     if (error) {
       console.error(tag, 'Query error:', error);
-      return NextResponse.json({ error: 'Error al consultar gastos' }, { status: 500 });
+      // In development we expose details, but also allow a debug flag in prod for quick troubleshooting
+      const resp: any = { error: 'Error al consultar gastos' };
+      if (searchParams.get('debug') === 'true') resp.details = error.message;
+      return NextResponse.json(resp, { status: 500 });
     }
 
     const totalByCategory = (expenses || []).reduce<Record<string, number>>(
