@@ -1,0 +1,25 @@
+{
+  "name": "rentnow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RentNow — SaaS de Gestión de Arriendos con IA",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "seed:demo": "node scripts/seed.mjs",
+    "setup:demo": "npm install && npm run seed:demo && npm run dev"
+  },
+  "dependencies": {
+    "next": "^15.2.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@supabase/supabase-js": "^2.49.4",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.21"
+  }
+}
