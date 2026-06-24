@@ -1,0 +1,15 @@
+{
+  "countries": {
+    "Colombia": { "lat": 4.5709, "lng": -74.2973, "zoom": 5 },
+    "USA": { "lat": 37.0902, "lng": -95.7129, "zoom": 4 },
+    "España": { "lat": 40.4637, "lng": -3.7492, "zoom": 5 }
+  },
+  "departments": {
+    "Antioquia": { "lat": 6.5653, "lng": -75.529, "zoom": 8 },
+    "Cundinamarca": { "lat": 4.8228, "lng": -74.3493, "zoom": 8 },
+    "California": { "lat": 36.1162, "lng": -119.6816, "zoom": 6 },
+    "Florida": { "lat": 27.9942, "lng": -81.7603, "zoom": 7 },
+    "Madrid": { "lat": 40.4168, "lng": -3.7038, "zoom": 9 },
+    "Cataluña": { "lat": 41.5912, "lng": 1.5209, "zoom": 8 }
+  }
+}

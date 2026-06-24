@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 36" fill="none">
+  <g transform="translate(2, 2)">
+    <path d="M16 0L2 11.2V28.8C2 30.1255 3.07452 32 4.4 32H13.6C14.1523 32 14.6 31.5523 14.6 31V21.6H17.4V31C17.4 31.5523 17.8477 32 18.4 32H27.6C28.9255 32 30 30.1255 30 28.8V11.2L16 0Z" fill="#2563EB"/>
+  </g>
+  <text x="40" y="24.5"
+    font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+    font-size="19" font-weight="900" fill="#1E3A5F" letter-spacing="-0.03em"
+  >Rent<tspan fill="#f0b90b">Now</tspan></text>
+</svg>

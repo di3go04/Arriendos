@@ -1,0 +1,13 @@
+{
+  "[json]": {
+    "files.encoding": "utf8",
+    "files.saveWithoutBOM": true
+  },
+  "[jsonc]": {
+    "files.encoding": "utf8",
+    "files.saveWithoutBOM": true
+  },
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false,
+  "files.trimBom": true
+}
