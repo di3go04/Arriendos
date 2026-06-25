@@ -1,0 +1,125 @@
+import type { Config } from 'tailwindcss'
+import animate from 'tailwindcss-animate'
+
+const config: Config = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: '#e8edf3',
+          100: '#c5d1e0',
+          200: '#9fb3cc',
+          300: '#7a95b8',
+          400: '#5a7aa3',
+          500: '#3d5f8e',
+          600: '#2a4a75',
+          700: '#1a355c',
+          800: '#0f2440',
+          850: '#0b1a2e',
+          900: '#060e1a',
+          DEFAULT: '#1E3A5F',
+          light: '#2E4A7A',
+          subtle: '#EDF2F9',
+          foreground: '#FFFFFF',
+        },
+        gold: {
+          50: '#fef8e0',
+          100: '#fef0b3',
+          200: '#fde880',
+          300: '#f5d14a',
+          400: '#f0b90b',
+          500: '#e5a800',
+          600: '#c48f00',
+          700: '#a37600',
+          800: '#825e00',
+          900: '#614600',
+          DEFAULT: '#f0b90b',
+        },
+        primary: {
+          DEFAULT: '#f0b90b',
+          hover: '#e5a800',
+          subtle: '#fef8e0',
+          foreground: '#060e1a',
+        },
+        accent: {
+          DEFAULT: '#f0b90b',
+          foreground: '#060e1a',
+        },
+        neutral: {
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
+        },
+        success: {
+          DEFAULT: '#10B981',
+          foreground: '#FFFFFF',
+        },
+        warning: {
+          DEFAULT: '#f0b90b',
+          foreground: '#060e1a',
+        },
+        danger: {
+          DEFAULT: '#EF4444',
+          foreground: '#FFFFFF',
+        },
+      },
+      fontFamily: {
+        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        card: '1rem',
+        'card-lg': '1.25rem',
+        pill: '9999px',
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.04)',
+        'card-hover': '0 8px 25px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+        modal: '0 20px 60px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.06)',
+        btn: '0 2px 4px rgba(240,185,11,0.15)',
+        'btn-hover': '0 4px 12px rgba(240,185,11,0.25)',
+        elevated: '0 16px 48px rgba(0,0,0,0.1)',
+        float: '0 8px 30px rgba(0,0,0,0.10)',
+        glass: '0 0 0 1px rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.08)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.15s ease-out forwards',
+        'slide-up': 'slideUp 0.25s ease-out forwards',
+        'scale-in': 'scaleIn 0.2s ease-out forwards',
+        'slide-in-right': 'slideInRight 0.2s ease-out forwards',
+        'slide-down': 'slideDown 0.2s ease-out forwards',
+        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        'window-glow': 'windowGlow 1.4s ease-in-out infinite',
+        'roof-draw': 'roofDraw 1.4s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+        scaleIn: { '0%': { transform: 'scale(0.96)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+        slideInRight: { '0%': { transform: 'translateX(16px)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } },
+        slideDown: { '0%': { transform: 'translateY(-8px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+        fadeInUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+        pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.6' } },
+        windowGlow: { '0%, 100%': { opacity: '0.2' }, '50%': { opacity: '1' } },
+        roofDraw: { '0%': { 'stroke-dashoffset': '200' }, '50%': { 'stroke-dashoffset': '0' }, '100%': { 'stroke-dashoffset': '200' } },
+      },
+    },
+  },
+  plugins: [animate],
+}
+
+export default config

@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - MP_WEBHOOK_SECRET=${MP_WEBHOOK_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - WHATSAPP_BRIDGE_URL=http://whatsapp-bridge:3001
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
+    depends_on:
+      - supabase
+    networks:
+      - rentnow-network
+
+  supabase:
+    image: supabase/postgres:15.1.0.117
+    ports:
+      - "54322:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - supabase_data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - rentnow-network
+
+  whatsapp-bridge:
+    image: node:20-alpine
+    working_dir: /app
+    command: node scripts/whatsapp-bridge.mjs
+    volumes:
+      - .:/app
+    ports:
+      - "3001:3001"
+    environment:
+      - WHATSAPP_BRIDGE_PORT=3001
+    networks:
+      - rentnow-network
+
+  alert-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: node src/modules/dashboard-alerts/worker.ts
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - WHATSAPP_BRIDGE_URL=http://whatsapp-bridge:3001
+    depends_on:
+      - app
+      - redis
+    restart: always
+    networks:
+      - rentnow-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rentnow-network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      - MP_MAX_MESSAGES=5000
+    networks:
+      - rentnow-network
+
+volumes:
+  supabase_data:
+  redis_data:
+
+networks:
+  rentnow-network:
+    driver: bridge

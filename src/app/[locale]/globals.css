@@ -1,0 +1,6 @@
+nav a { display: inline-block; }
+button {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+}

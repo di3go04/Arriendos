@@ -1,0 +1,246 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RentNow API",
+    "description": "API REST para la gestión de arrendamientos, propiedades, contratos y pagos.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "RentNow Support",
+      "email": "support@rentnow.app",
+      "url": "https://rentnow.app"
+    }
+  },
+  "servers": [
+    { "url": "https://rentnow.app", "description": "Producción" },
+    { "url": "http://localhost:3000", "description": "Desarrollo" }
+  ],
+  "paths": {
+    "/api/properties": {
+      "get": {
+        "summary": "Listar propiedades",
+        "tags": ["Propiedades"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["disponible", "ocupado", "mantenimiento", "inactivo"] } }
+        ],
+        "responses": {
+          "200": { "description": "Lista de propiedades" },
+          "401": { "description": "No autorizado" }
+        }
+      },
+      "post": {
+        "summary": "Crear propiedad",
+        "tags": ["Propiedades"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Propiedad creada" },
+          "400": { "description": "Datos inválidos" }
+        }
+      }
+    },
+    "/api/contracts": {
+      "get": {
+        "summary": "Listar contratos",
+        "tags": ["Contratos"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Lista de contratos" } }
+      },
+      "post": {
+        "summary": "Crear contrato",
+        "tags": ["Contratos"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "201": { "description": "Contrato creado" } }
+      }
+    },
+    "/api/payments": {
+      "get": {
+        "summary": "Listar pagos",
+        "tags": ["Pagos"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Lista de pagos" } }
+      },
+      "post": {
+        "summary": "Registrar pago",
+        "tags": ["Pagos"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "201": { "description": "Pago registrado" } }
+      }
+    },
+    "/api/payments/create-subscription": {
+      "post": {
+        "summary": "Crear suscripción recurrente (Mercado Pago)",
+        "tags": ["Suscripciones"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "planId": { "type": "string", "enum": ["basico", "profesional", "empresa"] },
+                  "currency": { "type": "string", "default": "USD" }
+                },
+                "required": ["planId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "URL de checkout generada" },
+          "401": { "description": "No autorizado" }
+        }
+      }
+    },
+    "/api/payments/webhook-mp": {
+      "post": {
+        "summary": "Webhook de Mercado Pago (IPN)",
+        "tags": ["Webhooks"],
+        "responses": { "200": { "description": "Notificación recibida" } }
+      }
+    },
+    "/api/leads": {
+      "post": {
+        "summary": "Enviar lead desde portal público",
+        "tags": ["Leads"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "phone": { "type": "string" },
+                  "propertyId": { "type": "string", "format": "uuid" },
+                  "ownerId": { "type": "string", "format": "uuid" }
+                },
+                "required": ["name", "email", "phone", "propertyId"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Lead creado" } }
+      }
+    },
+    "/api/ai/predict-morosity": {
+      "post": {
+        "summary": "Predecir riesgo de morosidad (IA)",
+        "tags": ["IA"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": { "type": "string", "format": "uuid" }
+                },
+                "required": ["tenantId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Score de riesgo y análisis" }
+        }
+      }
+    },
+    "/api/documents/generate": {
+      "post": {
+        "summary": "Generar documento fiscal/legal",
+        "tags": ["Documentos"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string", "enum": ["receipt", "certificate", "inventory", "peace_safe"] },
+                  "contractId": { "type": "string", "format": "uuid" }
+                },
+                "required": ["type", "contractId"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Documento generado en HTML" } }
+      }
+    },
+    "/api/reports/financial": {
+      "get": {
+        "summary": "Reporte financiero anual",
+        "tags": ["Reportes"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "year", "in": "query", "schema": { "type": "integer" } },
+          { "name": "propertyId", "in": "query", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Reporte financiero completo" }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "summary": "Listar notificaciones",
+        "tags": ["Notificaciones"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Lista de notificaciones" } }
+      }
+    },
+    "/api/services": {
+      "get": {
+        "summary": "Listar proveedores de servicios",
+        "tags": ["Servicios"],
+        "responses": { "200": { "description": "Lista de proveedores" } }
+      }
+    },
+    "/api/expenses": {
+      "get": {
+        "summary": "Listar gastos",
+        "tags": ["Gastos"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "propertyId", "in": "query", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Gastos con resumen por categoría" } }
+      },
+      "post": {
+        "summary": "Registrar gasto",
+        "tags": ["Gastos"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "201": { "description": "Gasto creado" } }
+      }
+    },
+    "/api/admin/organizations": {
+      "get": {
+        "summary": "Listar organizaciones",
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Lista de organizaciones" } }
+      }
+    },
+    "/api/dashboard/summary": {
+      "get": {
+        "summary": "Resumen del dashboard (leads, riesgos, KPIs)",
+        "tags": ["Dashboard"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "tenantId", "in": "query", "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Resumen completo del dashboard" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token JWT de Supabase Auth"
+      }
+    }
+  }
+}

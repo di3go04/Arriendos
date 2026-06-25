@@ -1,0 +1,6 @@
+export { Hero } from './Hero'
+export { FeaturesGrid } from './FeaturesGrid'
+export { BentoGrid } from './BentoGrid'
+export { HowItWorks } from './HowItWorks'
+export { PricingSection } from './PricingSection'
+export { ImpactSection } from './ImpactSection'

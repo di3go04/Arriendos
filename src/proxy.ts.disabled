@@ -1,0 +1,179 @@
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+const LOCALES = ['es', 'en', 'pt', 'fr', 'de', 'it'] as const;
+const DEFAULT_LOCALE = 'es';
+type Locale = (typeof LOCALES)[number];
+
+function isLocale(value: string): value is Locale {
+  return LOCALES.some(locale => locale === value);
+}
+
+function getLocale(request: NextRequest): Locale {
+  const cookieLocale = request.cookies.get('RentNow_locale')?.value;
+  if (cookieLocale && isLocale(cookieLocale)) {
+    return cookieLocale;
+  }
+  const acceptLang = request.headers.get('accept-language') || '';
+  if (acceptLang.includes('pt')) return 'pt';
+  if (acceptLang.startsWith('en')) return 'en';
+  if (acceptLang.includes('fr')) return 'fr';
+  if (acceptLang.startsWith('de')) return 'de';
+  if (acceptLang.includes('it')) return 'it';
+  return DEFAULT_LOCALE;
+}
+
+export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const searchParams = request.nextUrl.search;
+
+  // Skip API, static, and other internal paths
+  if (
+    pathname.startsWith('/api/') || 
+    pathname.startsWith('/_next/') || 
+    pathname.startsWith('/static/') ||
+    pathname === '/favicon.ico' ||
+    pathname === '/manifest.json' ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|eot)$/.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Parse path segments to check for locale prefix
+  const segments = pathname.split('/');
+  const hasLocalePrefix = segments.length > 1 && isLocale(segments[1]);
+  
+  let locale: Locale;
+  let cleanPathname: string;
+
+  if (hasLocalePrefix) {
+    locale = segments[1] as Locale;
+    cleanPathname = '/' + segments.slice(2).join('/');
+    if (cleanPathname === '') cleanPathname = '/';
+  } else {
+    locale = getLocale(request);
+    // Redirect to prefixed URL
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}${pathname}`;
+    const redirectResponse = NextResponse.redirect(url);
+    redirectResponse.cookies.set('RentNow_locale', locale, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+      sameSite: 'lax',
+    });
+    return redirectResponse;
+  }
+
+  // Initialize response
+  let supabaseResponse = NextResponse.next({ request });
+  supabaseResponse.cookies.set('RentNow_locale', locale, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: '/',
+    sameSite: 'lax',
+  });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // If no Supabase config, rewrite to the clean path to render page
+    const rewriteUrl = new URL(cleanPathname + searchParams, request.url);
+    request.headers.set('x-locale', locale);
+    const rewriteResponse = NextResponse.rewrite(rewriteUrl, { request });
+    rewriteResponse.cookies.set('RentNow_locale', locale, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+      sameSite: 'lax',
+    });
+    return rewriteResponse;
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() { return request.cookies.getAll(); },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const protectedPaths = ['/dashboard', '/admin', '/contracts', '/properties', '/templates', '/plantillas'];
+  const isProtected = protectedPaths.some(p => cleanPathname.startsWith(p));
+
+  if (!user && isProtected) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/login`;
+    return NextResponse.redirect(url);
+  }
+
+  if (user && (cleanPathname === '/login' || cleanPathname === '/register')) {
+    const role = user.user_metadata?.role || 'arrendatario';
+    const url = request.nextUrl.clone();
+    if (role === 'admin') url.pathname = `/${locale}/admin`;
+    else if (role === 'arrendador') url.pathname = `/${locale}/dashboard/landlord`;
+    else url.pathname = `/${locale}/dashboard/tenant`;
+    return NextResponse.redirect(url);
+  }
+
+  if (user) {
+    const role = user.user_metadata?.role || 'arrendatario';
+    if (role === 'arrendatario') {
+      if (cleanPathname.startsWith('/dashboard/landlord') || cleanPathname.startsWith('/admin') ||
+          cleanPathname.startsWith('/properties') || cleanPathname.startsWith('/templates') || cleanPathname.startsWith('/plantillas')) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/dashboard/tenant`;
+        return NextResponse.redirect(url);
+      }
+    }
+    if (role === 'arrendador') {
+      if (cleanPathname.startsWith('/dashboard/tenant') || cleanPathname.startsWith('/admin')) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/dashboard/landlord`;
+        return NextResponse.redirect(url);
+      }
+    }
+    if (role === 'admin') {
+      if (cleanPathname.startsWith('/dashboard/landlord') || cleanPathname.startsWith('/dashboard/tenant')) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/admin`;
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
+  // Rewrite internally to the clean flat path (e.g. /en/precios -> /precios)
+  const rewriteUrl = new URL(cleanPathname + searchParams, request.url);
+  request.headers.set('x-locale', locale);
+  const rewriteResponse = NextResponse.rewrite(rewriteUrl, { request });
+  
+  // Copy Supabase auth cookies and our locale cookie to rewrite response
+  rewriteResponse.cookies.set('RentNow_locale', locale, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: '/',
+    sameSite: 'lax',
+  });
+  
+  // Set the Supabase cookies on the rewrite response if they were modified
+  request.cookies.getAll().forEach(cookie => {
+    if (cookie.name.startsWith('sb-')) {
+      rewriteResponse.cookies.set(cookie.name, cookie.value, {
+        path: '/',
+        sameSite: 'lax',
+      });
+    }
+  });
+
+  return rewriteResponse;
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};

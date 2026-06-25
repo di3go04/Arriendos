@@ -1,0 +1,390 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PropertyType {
+  APARTAMENTO
+  CASA
+  LOCAL
+  OFICINA
+  BODEGA
+  COLIVING
+}
+
+enum UnitStatus {
+  DISPONIBLE
+  OCUPADO
+  RESERVADO
+  MANTENIMIENTO
+}
+
+enum ContractStatus {
+  BORRADOR
+  PENDIENTE_FIRMA
+  ACTIVO
+  VENCIDO
+  TERMINADO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+  ATRASADO
+  CANCELADO
+}
+
+enum KYCStatus {
+  PENDIENTE
+  DOCUMENTOS_ENVIADOS
+  VERIFICADO
+  RECHAZADO
+}
+
+model Account {
+  id                String    @id @default(cuid())
+  userId            String?
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Authenticator {
+  id                String  @id @default(cuid())
+  credentialID      String  @unique
+  userId            String
+  providerAccountId String
+  credentialPublicKey String
+  counter           Int
+  credentialDeviceType String
+  credentialBackedUp  Boolean
+  transports        String?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           String    @default("arrendador")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  authenticators Authenticator[]
+  properties  Property[]
+  contracts   Contract[]
+  subscriptions Subscription[]
+  kycDocuments KYCDocument[]
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        PropertyType @default(APARTAMENTO)
+  address     String?
+  city        String
+  state       String?
+  country     String    @default("CO")
+  lat         Float?
+  lng         Float?
+  images      String[]
+  amenities   String[]
+  documents   String[]
+  esgScore    Int?
+  esgCertified Boolean @default(false)
+  iotEnabled  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  units          PropertyUnit[]
+  contracts      Contract[]
+  subscriptions  Subscription[]
+  esgCerts       EsgCertification[]
+  iotSensors     IotSensor[]
+  aiDescriptions AiDescription[]
+  recommendationsFrom Recommendation[] @relation("PropertyRecommendations")
+  recommendationsTo   Recommendation[] @relation("RecommendedProperty")
+  dynamicPrices  DynamicPrice[]
+}
+
+model PropertyUnit {
+  id         String     @id @default(cuid())
+  label      String
+  type       String     @default("private_room")
+  monthlyRent Float
+  currency   String     @default("COP")
+  status     UnitStatus @default(DISPONIBLE)
+  amenities  String[]
+  area       Float?
+  propertyId String
+  property   Property   @relation(fields: [propertyId], references: [id])
+
+  contracts Contract[]
+}
+
+model Contract {
+  id            String         @id @default(cuid())
+  templateId    String?
+  title         String
+  status        ContractStatus @default(BORRADOR)
+  contractData  Json
+  signedByOwner DateTime?
+  signedByTenant DateTime?
+  validFrom     DateTime?
+  validUntil    DateTime?
+  monthlyRent   Float
+  currency      String         @default("COP")
+  pdfUrl        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  ownerId      String
+  owner        User           @relation(fields: [ownerId], references: [id])
+  propertyId   String
+  property     Property       @relation(fields: [propertyId], references: [id])
+  unitId       String?
+  unit         PropertyUnit?  @relation(fields: [unitId], references: [id])
+  tenantId     String?
+  tenant       Tenant?        @relation(fields: [tenantId], references: [id])
+
+  payments Payment[]
+  vapiCalls VapiCall[]
+  voiceLogs VoiceCallLog[]
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  documentId String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  contracts    Contract[]
+  kycDocuments KYCDocument[]
+  voiceLogs    VoiceCallLog[]
+}
+
+model KYCDocument {
+  id         String    @id @default(cuid())
+  type       String
+  status     KYCStatus @default(PENDIENTE)
+  documentUrl String?
+  selfieUrl  String?
+  onfidoCheckId String?
+  belvoLinkId   String?
+  incomeData Json?
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Float
+  currency      String        @default("COP")
+  dueDate       DateTime
+  paidAt        DateTime?
+  status        PaymentStatus @default(PENDIENTE)
+  method        String?
+  reference     String?
+  bankMatchId   String?
+  lateFee       Float         @default(0)
+  notes         String?
+  createdAt     DateTime      @default(now())
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+}
+
+model BelvoLink {
+  id        String   @id @default(cuid())
+  linkId    String   @unique
+  institution String
+  status    String
+  accounts  Json?
+  createdAt DateTime @default(now())
+
+  userId String
+  incomeVerifications IncomeVerification[]
+}
+
+model IncomeVerification {
+  id             String   @id @default(cuid())
+  verified       Boolean  @default(false)
+  monthlyIncome  Float?
+  incomeCurrency String?
+  employment     String?
+  scoreData      Json?
+  verifiedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  linkId String
+  link   BelvoLink @relation(fields: [linkId], references: [id])
+}
+
+model VapiCall {
+  id          String   @id @default(cuid())
+  callSid     String?  @unique
+  status      String
+  duration    Int?
+  debtAmount  Float?
+  promisedAmount Float?
+  promisedDate DateTime?
+  outcome     String?
+  recordingUrl String?
+  createdAt   DateTime @default(now())
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+}
+
+model VoiceCallLog {
+  id        String   @id @default(cuid())
+  type      String   @default("outbound")
+  status    String
+  duration  Int?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  tenantId   String
+  tenant     Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  planType      String
+  status        String   @default("active")
+  pricePerMonth Float
+  currency      String   @default("COP")
+  minMonths     Int      @default(3)
+  maxPauseMonths Int     @default(3)
+  pausedUntil   DateTime?
+  startDate     DateTime?
+  endDate       DateTime?
+  stripeSubId   String?  @unique
+  createdAt     DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+}
+
+model EsgCertification {
+  id            String   @id @default(cuid())
+  energyKwh     Float?
+  waterM3       Float?
+  wasteKg       Float?
+  carbonFootprint Float?
+  overallScore  Int?
+  certification String?
+  certifiedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model IotSensor {
+  id         String   @id @default(cuid())
+  sensorId   String
+  sensorType String
+  location   String?
+  lastReading Float?
+  lastReadingAt DateTime?
+  alerts     Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([propertyId, sensorId])
+}
+
+model AiDescription {
+  id           String   @id @default(cuid())
+  originalText String
+  enhancedText String
+  model        String   @default("gemini")
+  promptTokens Int?
+  createdAt    DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model Recommendation {
+  id         String   @id @default(cuid())
+  score      Float
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  propertyId   String
+  property     Property @relation("PropertyRecommendations", fields: [propertyId], references: [id])
+  recommendedId String
+  recommended  Property @relation("RecommendedProperty", fields: [recommendedId], references: [id])
+
+  @@unique([propertyId, recommendedId])
+}
+
+model DynamicPrice {
+  id            String   @id @default(cuid())
+  basePrice     Float
+  suggestedPrice Float
+  factor        Float    @default(1.0)
+  season        String?
+  confidence    Float?
+  createdAt     DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+}

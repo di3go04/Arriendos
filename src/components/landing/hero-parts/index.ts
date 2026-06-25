@@ -1,0 +1,7 @@
+export { HeroBackground } from './HeroBackground'
+export { HeroBadge } from './HeroBadge'
+export { HeroTitle } from './HeroTitle'
+export { HeroSubtitle } from './HeroSubtitle'
+export { HeroCTAs } from './HeroCTAs'
+export { HeroBenefits } from './HeroBenefits'
+export { HeroMockup } from './HeroMockup'
