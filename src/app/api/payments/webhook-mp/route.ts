@@ -182,14 +182,20 @@ export async function POST(req: Request) {
     const xSignature = req.headers.get('x-signature');
     const xRequestId = req.headers.get('x-request-id');
 
-    const signatureIsValid = verifyWebhookSignature(bodyText, xSignature, xRequestId);
-    if (process.env.MP_WEBHOOK_SECRET && !signatureIsValid) {
-      console.warn('Webhook MP: firma invalida');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    // FAIL-CLOSED: si MP_WEBHOOK_SECRET no está definido, rechazar SIEMPRE.
+    // Esto evita webhook spoofing si la env var se cae accidentalmente.
+    if (!process.env.MP_WEBHOOK_SECRET) {
+      console.error('Webhook MP: MP_WEBHOOK_SECRET no configurado — rechazando por seguridad (fail-closed)');
+      return NextResponse.json(
+        { error: 'Webhook secret not configured' },
+        { status: 503 }
+      );
     }
 
-    if (!process.env.MP_WEBHOOK_SECRET && !signatureIsValid) {
-      console.warn('Webhook MP: firma no verificada porque MP_WEBHOOK_SECRET no esta configurado');
+    const signatureIsValid = verifyWebhookSignature(bodyText, xSignature, xRequestId);
+    if (!signatureIsValid) {
+      console.warn('Webhook MP: firma invalida');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const body = JSON.parse(bodyText);

@@ -334,7 +334,7 @@ function LoginPageContent() {
                 setErrorMsg('');
                 await nextAuthSignIn('credentials', {
                   email: 'demo@rentnow.app',
-                  password: 'Demo123!',
+                  password: 'DemoR3ntN0w!2026_Public',
                   callbackUrl: `${window.location.origin}/${locale}/dashboard`,
                   redirect: true,
                 });

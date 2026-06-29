@@ -60,7 +60,7 @@ describe('POST /api/payments/webhook-mp', () => {
     expect(json).toHaveProperty('received', true);
   });
 
-  it('debe continuar sin verificar firma si MP_WEBHOOK_SECRET no está definido', async () => {
+  it('debe rechazar con 503 cuando MP_WEBHOOK_SECRET no está definido (fail-closed)', async () => {
     delete process.env.MP_WEBHOOK_SECRET;
 
     const req = new Request('http://localhost/api/payments/webhook-mp', {
@@ -76,6 +76,10 @@ describe('POST /api/payments/webhook-mp', () => {
     });
 
     const res = await POST(req);
-    expect(res.status).toBe(200);
+    // Fail-closed: sin secret configurado, el webhook debe rechazar SIEMPRE
+    // para evitar webhook spoofing si la env var se cae accidentalmente.
+    expect(res.status).toBe(503);
+    const json = await res.json();
+    expect(json).toHaveProperty('error', 'Webhook secret not configured');
   });
 });

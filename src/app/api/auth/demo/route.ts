@@ -11,8 +11,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-const DEMO_EMAIL = 'demo@rentnow.app'
-const DEMO_PASSWORD = 'Demo123!'
+const DEMO_EMAIL = process.env.DEMO_EMAIL || 'demo@rentnow.app'
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DemoR3ntN0w!2026_Public'
 
 export const runtime = 'nodejs'
 

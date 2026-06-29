@@ -28,8 +28,8 @@ export function simulateDelay(ms = 800): Promise<void> {
 
 export function getDemoCredentials() {
   return {
-    email: 'demo@rentnow.app',
-    password: 'Demo123!',
+    email: process.env.DEMO_EMAIL || 'demo@rentnow.app',
+    password: process.env.DEMO_PASSWORD || 'DemoR3ntN0w!2026_Public',
   }
 }
 

@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const DEMO_EMAIL = 'demo@rentnow.app';
-const DEMO_PASSWORD = 'Demo123!';
+const DEMO_EMAIL = process.env.DEMO_EMAIL || 'demo@rentnow.app';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DemoR3ntN0w!2026_Public';
 
 export async function POST() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
